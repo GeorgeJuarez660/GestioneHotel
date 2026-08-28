@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modifica navetta - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/dipendente/navetta}">&larr; Torna alle navette</a>
+</header>
+
+<main class="manage-shell" style="max-width:560px;">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow">Area Dipendente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">Modifica navetta</h1>
+      <p class="dashboard-header__welcome" id="messaggioCodice"></p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel__header">
+      <h2 class="panel__title">Dati della corsa</h2>
+    </div>
+    <hr class="divider-brass">
+
+    <div id="esito" class="esito" hidden></div>
+
+    <form id="formNavetta" onsubmit="gestisciModifica(event)">
+      <div class="field">
+        <label for="codice">Codice</label>
+        <input type="text" id="codice" name="codice" maxlength="255" placeholder="Es. NAV-01" required>
+        <span class="hint">Puoi cambiarlo: il codice originale viene inviato a parte.</span>
+      </div>
+      <div class="field">
+        <label for="dataPartenza">Data di partenza</label>
+        <input type="date" id="dataPartenza" name="dataPartenza" required>
+        <span class="hint">Non puo' essere una data passata.</span>
+      </div>
+      <div class="field">
+        <label for="oraPartenza">Ora di partenza</label>
+        <input type="time" id="oraPartenza" name="oraPartenza" required>
+      </div>
+      <div class="field">
+        <label for="luogoPartenza">Luogo di partenza</label>
+        <input type="text" id="luogoPartenza" name="luogoPartenza" maxlength="255" placeholder="Es. Hotel" required>
+      </div>
+      <div class="field">
+        <label for="luogoDestinazione">Luogo di destinazione</label>
+        <input type="text" id="luogoDestinazione" name="luogoDestinazione" maxlength="255" placeholder="Es. Aeroporto" required>
+      </div>
+      <div class="field">
+        <label for="cfOperatoreInterno">Codice fiscale operatore interno</label>
+        <input type="text" id="cfOperatoreInterno" name="cfOperatoreInterno" maxlength="16" placeholder="Facoltativo">
+        <span class="hint">Dipendente incaricato della corsa.</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Salva modifiche</button>
+        <p class="link-row"><a th:href="@{/hotel/dipendente/navetta}">&larr; Torna all'elenco delle corse</a></p>
+      </div>
+    </form>
+  </section>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const ENDPOINT_DIPENDENTE = API_BASE + '/homepage/dipendente';
+  const CHIAVE_SESSIONE = 'navettaDaModificare';
+
+  const MESSAGGIO_ACCESSO_NEGATO = 'ACCESSO NEGATO: effettua di nuovo l\'accesso.';
+
+  /*
+   * Verifica dell'accesso prima delle operazioni protette: /check deve
+   * restituire un dipendente. Resta fuori il recupero dei dati della corsa.
+   */
+  async function accessoConsentito() {
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/check', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + (recuperaToken() || '') }
+      });
+
+      if (!response.ok) return false;
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      return corpo !== null && typeof corpo === 'object' && corpo.id != null;
+    } catch (errore) {
+      return false;
+    }
+  }
+
+  const form = document.getElementById('formNavetta');
+  const esito = document.getElementById('esito');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const messaggioCodice = document.getElementById('messaggioCodice');
+
+  // Codice con cui la navetta e' registrata adesso: viaggia come parametro della
+  // PUT, cosi' il service sa quale riga aggiornare anche se il codice cambia.
+  const codiceVecchio = new URLSearchParams(window.location.search).get('codice') || '';
+
+  messaggioCodice.textContent = codiceVecchio ? ('Corsa selezionata: ' + codiceVecchio) : 'Nessuna corsa selezionata.';
+
+  function riempiForm(navetta) {
+    document.getElementById('codice').value = navetta.codice || '';
+    document.getElementById('dataPartenza').value = navetta.dataPartenza || '';
+    document.getElementById('oraPartenza').value = navetta.oraPartenza || '';
+    document.getElementById('luogoPartenza').value = navetta.luogoPartenza || '';
+    document.getElementById('luogoDestinazione').value = navetta.luogoDestinazione || '';
+    document.getElementById('cfOperatoreInterno').value = navetta.cfOperatoreInterno || '';
+  }
+
+  /*
+   * La dto arriva dalla pagina di elenco tramite sessionStorage. Se la pagina
+   * viene ricaricata quel dato non c'e' piu': in quel caso si richiama
+   * direttamente /goToUpdateNavetta con il codice preso dalla query string.
+   */
+  async function caricaNavetta() {
+    nascondiEsito(esito);
+
+    const salvata = sessionStorage.getItem(CHIAVE_SESSIONE);
+
+    if (salvata) {
+      sessionStorage.removeItem(CHIAVE_SESSIONE);
+      riempiForm(JSON.parse(salvata));
+      return;
+    }
+
+    if (!codiceVecchio) {
+      mostraEsito(esito, 'Nessuna corsa selezionata: torna all\'elenco e premi Modifica.', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/goToUpdateNavetta/' + encodeURIComponent(codiceVecchio), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok && corpo) {
+        riempiForm(corpo);
+      } else {
+        mostraEsito(esito, corpo || 'Corsa non trovata.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  async function gestisciModifica(event) {
+    event.preventDefault();
+    nascondiEsito(esito);
+
+    if (!codiceVecchio) {
+      mostraEsito(esito, 'Nessuna corsa selezionata: torna all\'elenco e premi Modifica.', 'error');
+      return;
+    }
+
+    if (!(await accessoConsentito())) {
+      mostraEsito(esito, MESSAGGIO_ACCESSO_NEGATO, 'error');
+      return;
+    }
+
+    const cfOperatoreInterno = document.getElementById('cfOperatoreInterno').value.trim();
+
+    const corpoRichiesta = {
+      codice: document.getElementById('codice').value.trim(),
+      dataPartenza: document.getElementById('dataPartenza').value,
+      oraPartenza: document.getElementById('oraPartenza').value,
+      luogoDestinazione: document.getElementById('luogoDestinazione').value.trim(),
+      luogoPartenza: document.getElementById('luogoPartenza').value.trim(),
+      cfOperatoreInterno: cfOperatoreInterno || null
+    };
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Salvataggio in corso...';
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/modifyNavetta?codiceNavetta=' + encodeURIComponent(codiceVecchio), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpoRichiesta)
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok) {
+        mostraEsito(esito, corpo || 'Navetta modificata con successo.', 'success');
+      } else {
+        // In caso di errori di validazione il backend restituisce un array di messaggi.
+        mostraEsito(esito, corpo || 'Errore durante la modifica della navetta.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Salva modifiche';
+    }
+  };
+
+  caricaNavetta();
+</script>
+
+</body>
+</html>

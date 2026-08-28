@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+</header>
+
+<main class="page-shell">
+  <div class="stack stack--wide">
+
+    <div style="text-align:center;">
+      <span class="card__eyebrow">Benvenuto</span>
+      <h1 class="card__title" style="font-size:2rem;">Accedi al gestionale</h1>
+      <p style="margin-top:0.6rem;">Scegli come vuoi entrare: come ospite dell'hotel o come membro dello staff.</p>
+    </div>
+
+    <div class="choice-grid">
+
+      <section class="card">
+        <span class="card__eyebrow">Area Cliente</span>
+        <h2 class="card__title">Sei un ospite?</h2>
+        <hr class="divider-brass">
+        <p>Accedi al tuo account per prenotare una stanza o lasciare un feedback, oppure registrati se e' la tua prima visita.</p>
+        <div class="choice-actions">
+          <a class="btn btn-primary btn-block" th:href="@{/hotel/login-cliente}">Accedi come cliente</a>
+          <a class="btn btn-secondary btn-block" th:href="@{/hotel/register-cliente}">Registrati come cliente</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <span class="card__eyebrow">Area Dipendente</span>
+        <h2 class="card__title">Sei dello staff?</h2>
+        <hr class="divider-brass">
+        <p>Accedi al pannello dedicato al personale per gestire prenotazioni, stanze e servizio navetta.</p>
+        <div class="choice-actions">
+          <a class="btn btn-primary btn-block" th:href="@{/hotel/login-dipendente}">Accedi come dipendente</a>
+          <a class="btn btn-secondary btn-block" th:href="@{/hotel/register-dipendente}">Registrati come dipendente</a>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

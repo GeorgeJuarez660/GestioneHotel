@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I miei feedback - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+<style>
+  /* Stile locale alla pagina: le note arrivano a 2000 caratteri, quindi
+     devono andare a capo invece di allargare la tabella. */
+  .data-table td.cella-note {
+    white-space: normal;
+    max-width: 720px;
+  }
+
+  .data-table td.cella-indice {
+    color: var(--color-brass);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/homepage/cliente/}">&larr; Torna al pannello</a>
+</header>
+
+<main class="manage-shell">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow">Area Cliente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">I miei feedback</h1>
+      <p class="dashboard-header__welcome" id="messaggioBenvenuto"></p>
+    </div>
+  </div>
+
+  <div id="avvisoToken" class="esito esito--info" hidden>
+    Non risulta un accesso effettuato: non e' possibile recuperare i tuoi feedback.
+    <a th:href="@{/hotel/login-cliente}">Accedi</a> prima di continuare.
+  </div>
+
+  <section class="panel">
+    <div class="panel__header">
+      <h2 class="panel__title">Feedback lasciati</h2>
+      <button type="button" class="btn btn-secondary btn-small" id="btnAggiorna">Aggiorna elenco</button>
+    </div>
+    <hr class="divider-brass">
+
+    <div id="esitoElenco" class="esito" hidden></div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Commento</th>
+          </tr>
+        </thead>
+        <tbody id="corpoTabella">
+          <tr><td class="data-table__empty" colspan="2">Caricamento in corso...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const ENDPOINT_CLIENTE = API_BASE + '/homepage/cliente';
+
+  const MESSAGGIO_ACCESSO_NEGATO = 'ACCESSO NEGATO: effettua di nuovo l\'accesso.';
+
+  /*
+   * Verifica dell'accesso prima delle operazioni protette: /check deve
+   * restituire un cliente.
+   */
+  async function accessoConsentito() {
+    try {
+      const response = await fetch(ENDPOINT_CLIENTE + '/check', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + (recuperaToken() || '') }
+      });
+
+      if (!response.ok) return false;
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      return corpo !== null && typeof corpo === 'object' && corpo.id != null;
+    } catch (errore) {
+      return false;
+    }
+  }
+
+  const avvisoToken = document.getElementById('avvisoToken');
+  const messaggioBenvenuto = document.getElementById('messaggioBenvenuto');
+  const esitoElenco = document.getElementById('esitoElenco');
+  const corpoTabella = document.getElementById('corpoTabella');
+
+  function mostraRigaVuota(messaggio) {
+    corpoTabella.innerHTML = '';
+    const riga = document.createElement('tr');
+    const cella = document.createElement('td');
+    cella.className = 'data-table__empty';
+    cella.colSpan = 2;
+    cella.textContent = messaggio;
+    riga.appendChild(cella);
+    corpoTabella.appendChild(riga);
+  }
+
+  function creaRiga(feedback, indice) {
+    const riga = document.createElement('tr');
+
+    const cellaIndice = document.createElement('td');
+    cellaIndice.className = 'cella-indice';
+    cellaIndice.textContent = indice;
+    riga.appendChild(cellaIndice);
+
+    const cellaNote = document.createElement('td');
+    cellaNote.className = 'cella-note';
+    cellaNote.textContent = feedback.note || '-';
+    riga.appendChild(cellaNote);
+
+    return riga;
+  }
+
+  /*
+   * Il codice fiscale non viene mandato dalla pagina: l'endpoint lo ricava dal
+   * claim "clienteCF" del token, quindi basta inoltrare l'header Authorization.
+   */
+  async function leggiFeedback() {
+    nascondiEsito(esitoElenco);
+    mostraRigaVuota('Caricamento in corso...');
+
+    const token = recuperaToken();
+
+    if (!token) {
+      mostraRigaVuota('Nessun dato disponibile.');
+      return;
+    }
+
+    if (!(await accessoConsentito())) {
+      mostraRigaVuota('Nessun dato disponibile.');
+      mostraEsito(esitoElenco, MESSAGGIO_ACCESSO_NEGATO, 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(ENDPOINT_CLIENTE + '/readFeedbackByClienteCF', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (!response.ok) {
+        mostraRigaVuota('Nessun dato disponibile.');
+        mostraEsito(esitoElenco, corpo || 'Errore durante la lettura dei feedback.', 'error');
+        return;
+      }
+
+      if (!Array.isArray(corpo) || corpo.length === 0) {
+        mostraRigaVuota('Non hai ancora lasciato nessun feedback.');
+        return;
+      }
+
+      corpoTabella.innerHTML = '';
+      corpo.forEach(function (feedback, posizione) {
+        corpoTabella.appendChild(creaRiga(feedback, posizione + 1));
+      });
+    } catch (errore) {
+      mostraRigaVuota('Nessun dato disponibile.');
+      mostraEsito(esitoElenco, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  const token = recuperaToken();
+
+  if (!token) {
+    avvisoToken.hidden = false;
+    messaggioBenvenuto.textContent = 'Nessun accesso effettuato.';
+  } else {
+    const username = decodificaUsernameToken(token);
+    messaggioBenvenuto.textContent = username ? ('Accesso effettuato come ' + username) : 'Accesso effettuato.';
+  }
+
+  document.getElementById('btnAggiorna').addEventListener('click', leggiFeedback);
+
+  leggiFeedback();
+</script>
+
+</body>
+</html>

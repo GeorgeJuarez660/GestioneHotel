@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lascia un feedback - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+<style>
+  /* Stile locale alla pagina: le note sono lunghe fino a 2000 caratteri,
+     un input su una riga sola non basta. */
+  .field textarea {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--color-ink-border);
+    color: var(--color-ivory);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    padding: 0.5rem 0.15rem;
+    min-height: 140px;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+  }
+
+  .field textarea::placeholder {
+    color: rgba(242, 237, 226, 0.35);
+  }
+
+  .field textarea:focus {
+    outline: none;
+    border-bottom-color: var(--color-brass);
+  }
+
+  .field textarea:focus-visible {
+    outline: 2px solid var(--color-brass);
+    outline-offset: 3px;
+  }
+</style>
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/homepage/cliente/}">&larr; Torna al pannello</a>
+</header>
+
+<main class="page-shell">
+  <div class="stack">
+    <section class="card">
+      <div class="card__icon" style="width:52px;height:52px;border-radius:50%;border:1px solid var(--color-brass-dim);display:flex;align-items:center;justify-content:center;color:var(--color-brass);margin-bottom:1.1rem;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15 9 22 9.5 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.5 9 9"></polygon>
+        </svg>
+      </div>
+      <span class="card__eyebrow">Area Cliente</span>
+      <h1 class="card__title">Lascia un feedback</h1>
+      <hr class="divider-brass">
+
+      <div id="esito" class="esito" hidden></div>
+
+      <form id="formFeedback" onsubmit="gestisciInserimento(event)">
+        <div class="field">
+          <label for="note">Il tuo commento</label>
+          <textarea id="note" name="note" maxlength="2000" placeholder="Raccontaci com'e' andato il soggiorno" required></textarea>
+          <span class="hint">Massimo 2000 caratteri.</span>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Invia feedback</button>
+          <p class="link-row"><a th:href="@{/hotel/homepage/cliente/}">&larr; Torna al pannello cliente</a></p>
+        </div>
+      </form>
+    </section>
+  </div>
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const ENDPOINT_CLIENTE = API_BASE + '/homepage/cliente';
+
+  const MESSAGGIO_ACCESSO_NEGATO = 'ACCESSO NEGATO: effettua di nuovo l\'accesso.';
+
+  /*
+   * Verifica dell'accesso prima delle operazioni protette: /check deve
+   * restituire un cliente.
+   */
+  async function accessoConsentito() {
+    try {
+      const response = await fetch(ENDPOINT_CLIENTE + '/check', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + (recuperaToken() || '') }
+      });
+
+      if (!response.ok) return false;
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      return corpo !== null && typeof corpo === 'object' && corpo.id != null;
+    } catch (errore) {
+      return false;
+    }
+  }
+
+  const form = document.getElementById('formFeedback');
+  const esito = document.getElementById('esito');
+  const btnSubmit = document.getElementById('btnSubmit');
+
+  async function gestisciInserimento(event) {
+    event.preventDefault();
+    nascondiEsito(esito);
+
+    if (!(await accessoConsentito())) {
+      mostraEsito(esito, MESSAGGIO_ACCESSO_NEGATO, 'error');
+      return;
+    }
+
+    const corpoRichiesta = {
+      note: document.getElementById('note').value.trim()
+    };
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Invio in corso...';
+
+    try {
+      const response = await fetch(ENDPOINT_CLIENTE + '/addFeedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (recuperaToken() || '')
+        },
+        body: JSON.stringify(corpoRichiesta)
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok) {
+        mostraEsito(esito, corpo || 'Feedback inviato con successo.', 'success');
+        form.reset();
+      } else {
+        // In caso di errori di validazione il backend restituisce un array di messaggi.
+        mostraEsito(esito, corpo || 'Errore durante l\'invio del feedback.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Invia feedback';
+    }
+  };
+</script>
+
+</body>
+</html>

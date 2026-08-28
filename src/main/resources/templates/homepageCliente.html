@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Area cliente - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" id="logout">&larr; Logout</a>
+</header>
+
+<main class="dashboard-shell">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow">Area Cliente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">Benvenuto</h1>
+      <p class="dashboard-header__welcome" id="messaggioBenvenuto"></p>
+    </div>
+  </div>
+
+  <div id="avvisoToken" class="esito esito--info" hidden>
+    Non risulta un accesso effettuato: alcune azioni potrebbero non funzionare.
+    <a th:href="@{/hotel/login-cliente}">Accedi</a> prima di continuare.
+  </div>
+
+  <div class="action-grid">
+
+    <section class="action-card">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6"></path>
+          <path d="M3 18v2 M21 18v2 M3 12v-3a2 2 0 0 1 2-2h6v5"></path>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Prenota una stanza</h2>
+      <p class="action-card__desc">Richiama l'endpoint protetto dedicato alla prenotazione, inviando il token salvato al momento del login.</p>
+      <button type="button" class="btn btn-primary" id="btnPrenota">Vai alla prenotazione</button>
+    </section>
+
+    <section class="action-card">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15 9 22 9.5 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.5 9 9"></polygon>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Lascia un feedback</h2>
+      <p class="action-card__desc">Richiama l'endpoint protetto dedicato al feedback, inviando il token salvato al momento del login.</p>
+      <button type="button" class="btn btn-primary" id="btnFeedback">Vai al feedback</button>
+    </section>
+
+    <section class="action-card">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"></path>
+          <path d="M7 9h10 M7 13h6"></path>
+        </svg>
+      </div>
+      <h2 class="action-card__title">I miei feedback</h2>
+      <p class="action-card__desc">Consulta i feedback che hai gia' lasciato: il codice fiscale viene ricavato dal token.</p>
+      <button type="button" class="btn btn-primary" id="btnMieiFeedback">Vedi i miei feedback</button>
+    </section>
+
+  </div>
+
+  <div id="risultatoWrapper" hidden>
+    <span class="card__eyebrow">Risposta del server</span>
+    <div class="result-panel" id="risultato"></div>
+  </div>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const avvisoToken = document.getElementById('avvisoToken');
+  const messaggioBenvenuto = document.getElementById('messaggioBenvenuto');
+  const risultatoWrapper = document.getElementById('risultatoWrapper');
+  const risultato = document.getElementById('risultato');
+
+  const token = recuperaToken();
+
+  if (!token) {
+    avvisoToken.hidden = false;
+    messaggioBenvenuto.textContent = 'Nessun accesso effettuato.';
+  } else {
+    const username = decodificaUsernameToken(token);
+    messaggioBenvenuto.textContent = username ? ('Accesso effettuato come ' + username) : 'Accesso effettuato.';
+  }
+
+  async function chiamaEndpointProtetto(percorso) {
+    risultatoWrapper.hidden = false;
+    risultato.textContent = 'Richiesta in corso...';
+
+    try {
+      const response = await fetch(API_BASE + '/homepage/cliente/check', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + (recuperaToken() || '')
+        }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      risultato.textContent = 'Stato HTTP: ' + response.status + '\n\n' +
+        (typeof corpo === 'string' ? corpo : JSON.stringify(corpo, null, 2));
+
+        window.location.href = percorso;
+    } catch (errore) {
+      risultato.textContent = 'Accesso negato! Riprova piu tardi.';
+    }
+  }
+
+  async function logout() {
+    const token = recuperaToken();
+    if (token) {
+      try {
+        await fetch(API_BASE + '/hotel/logout', {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+      } catch (e) {
+        // anche se la chiamata fallisce, procedi comunque a pulire il client
+      }
+    }
+    rimuoviToken();
+    window.location.href = '/hotel/login-cliente';
+  }
+
+  document.getElementById('btnPrenota').addEventListener('click', function () {
+    chiamaEndpointProtetto('/hotel/cliente/prenotazione');
+  });
+
+  document.getElementById('btnFeedback').addEventListener('click', function () {
+    chiamaEndpointProtetto('/hotel/cliente/feedback');
+  });
+
+  document.getElementById('btnMieiFeedback').addEventListener('click', function () {
+    chiamaEndpointProtetto('/hotel/cliente/miei-feedback');
+  });
+
+  document.getElementById('logout').addEventListener('click', function () {
+    logout();
+  });
+</script>
+
+</body>
+</html>

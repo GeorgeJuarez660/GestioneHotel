@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Area dipendente - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" id="logout">&larr; Logout</a>
+</header>
+
+<main class="dashboard-shell">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow">Area Dipendente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">Benvenuto</h1>
+      <p class="dashboard-header__welcome" id="messaggioBenvenuto"></p>
+    </div>
+  </div>
+
+  <div id="avvisoDati" class="esito esito--info" hidden>
+    Non risultano dati di accesso salvati. <a th:href="@{/hotel/login-dipendente}">Accedi</a> prima di continuare.
+  </div>
+
+  <div class="action-grid">
+
+    <a class="action-card" th:href="@{/hotel/dipendente/prenotazioni}">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="17" rx="2"></rect>
+          <path d="M3 9h18 M8 2v4 M16 2v4"></path>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Gestione prenotazioni</h2>
+      <p class="action-card__desc">Visualizza e gestisci le prenotazioni dell'hotel.</p>
+      <div>
+        <span class="action-card__count" id="contatorePrenotazioni">-</span>
+        <span class="action-card__count-label">registrate</span>
+      </div>
+    </a>
+
+    <a class="action-card" th:href="@{/hotel/dipendente/navetta}">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 16V8a1 1 0 0 1 1-1h11l4 4v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"></path>
+          <circle cx="7.5" cy="17.5" r="1.5"></circle>
+          <circle cx="16.5" cy="17.5" r="1.5"></circle>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Servizio navetta</h2>
+      <p class="action-card__desc">Imposta e aggiorna il servizio navetta per gli ospiti.</p>
+      <div>
+        <span class="action-card__count" id="contatoreNavette">-</span>
+        <span class="action-card__count-label">corse pianificate</span>
+      </div>
+    </a>
+
+    <a class="action-card" th:href="@{/hotel/dipendente/guida}">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 20V5a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v15"></path>
+          <path d="M7 5h9l-2 3 2 3H7Z"></path>
+          <circle cx="18" cy="17" r="3"></circle>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Servizio guida</h2>
+      <p class="action-card__desc">Programma le visite guidate e assegna le guide agli ospiti.</p>
+      <div>
+        <span class="action-card__count" id="contatoreGuide">-</span>
+        <span class="action-card__count-label">visite pianificate</span>
+      </div>
+    </a>
+
+    <a class="action-card" th:href="@{/hotel/dipendente/piscina}">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 16c1.5 0 1.5 1.5 3 1.5s1.5-1.5 3-1.5 1.5 1.5 3 1.5 1.5-1.5 3-1.5 1.5 1.5 3 1.5 1.5-1.5 3-1.5"></path>
+          <path d="M2 20c1.5 0 1.5 1.5 3 1.5s1.5-1.5 3-1.5 1.5 1.5 3 1.5 1.5-1.5 3-1.5 1.5 1.5 3 1.5 1.5-1.5 3-1.5"></path>
+          <path d="M7 16V4a2 2 0 0 1 4 0 M15 16V4a2 2 0 0 1 4 0 M7 8h4 M15 8h4"></path>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Servizio piscina</h2>
+      <p class="action-card__desc">Registra le vasche e gli addetti assegnati.</p>
+      <div>
+        <span class="action-card__count" id="contatorePiscine">-</span>
+        <span class="action-card__count-label">piscine</span>
+      </div>
+    </a>
+
+    <a class="action-card" th:href="@{/hotel/dipendente/stanze}">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 21V7l8-4 8 4v14"></path>
+          <path d="M9 21v-6h6v6"></path>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Gestione stanze</h2>
+      <p class="action-card__desc">Configura le stanze disponibili nell'hotel.</p>
+      <div>
+        <span class="action-card__count" id="contatoreStanze">-</span>
+        <span class="action-card__count-label">stanze</span>
+      </div>
+    </a>
+
+    <a class="action-card" th:href="@{/hotel/dipendente/pacchetti}">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="8" width="18" height="13" rx="1"></rect>
+          <path d="M3 12h18 M12 8v13 M12 8c-2.5 0-4-1-4-2.5S9.5 3 12 8Zm0 0c2.5 0 4-1 4-2.5S14.5 3 12 8Z"></path>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Gestione pacchetti</h2>
+      <p class="action-card__desc">Inserisci i pacchetti proponibili agli ospiti.</p>
+      <div>
+        <span class="action-card__count" id="contatorePacchetti">-</span>
+        <span class="action-card__count-label">pacchetti</span>
+      </div>
+    </a>
+
+    <a class="action-card" th:href="@{/hotel/dipendente/feedback}">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"></path>
+          <path d="M7 9h10 M7 13h6"></path>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Feedback dei clienti</h2>
+      <p class="action-card__desc">Leggi i commenti lasciati dagli ospiti dell'hotel.</p>
+      <div>
+        <span class="action-card__count" id="contatoreFeedback">-</span>
+        <span class="action-card__count-label">ricevuti</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div id="esitoRiepilogo" class="esito" hidden></div>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const ENDPOINT_DIPENDENTE = API_BASE + '/homepage/dipendente';
+
+  const avvisoDati = document.getElementById('avvisoDati');
+  const messaggioBenvenuto = document.getElementById('messaggioBenvenuto');
+  const esitoRiepilogo = document.getElementById('esitoRiepilogo');
+
+  const dipendente = recuperaToken();
+
+  if (!dipendente) {
+    avvisoDati.hidden = false;
+    messaggioBenvenuto.textContent = 'Nessun accesso effettuato.';
+  } else {
+    const username = decodificaUsernameToken(dipendente);
+    messaggioBenvenuto.textContent = username ? ('Benvenuto, ' + username) : 'Accesso effettuato.';
+  }
+
+  /*
+   * Riepilogo: ogni card mostra quanti elementi restituisce il rispettivo
+   * endpoint di lettura. L'inserimento vero e proprio (/addStanza e
+   * /addNavetta) avviene nelle pagine dedicate raggiungibili dalle card.
+   */
+  async function contaElementi(percorso, contatore) {
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + percorso, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok && Array.isArray(corpo)) {
+        contatore.textContent = corpo.length;
+      } else {
+        contatore.textContent = '-';
+        mostraEsito(esitoRiepilogo, corpo || 'Errore durante la lettura dei dati.', 'error');
+      }
+    } catch (errore) {
+      contatore.textContent = '-';
+      mostraEsito(esitoRiepilogo, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  async function logout() {
+    const token = recuperaToken();
+    if (token) {
+      try {
+        await fetch(API_BASE + '/hotel/logout', {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+      } catch (e) {
+        // anche se la chiamata fallisce, procedi comunque a pulire il client
+      }
+    }
+    rimuoviToken();
+    window.location.href = '/hotel/login-dipendente';
+  }
+
+  contaElementi('/readPrenotazioni', document.getElementById('contatorePrenotazioni'));
+  contaElementi('/readNavette', document.getElementById('contatoreNavette'));
+  contaElementi('/readGuide', document.getElementById('contatoreGuide'));
+  contaElementi('/readPiscine', document.getElementById('contatorePiscine'));
+  contaElementi('/readStanze', document.getElementById('contatoreStanze'));
+  contaElementi('/readPacchetti', document.getElementById('contatorePacchetti'));
+  contaElementi('/readFeedback', document.getElementById('contatoreFeedback'));
+
+  document.getElementById('logout').addEventListener('click', function () {
+    logout();
+  });
+</script>
+
+</body>
+</html>
