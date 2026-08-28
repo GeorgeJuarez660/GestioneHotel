@@ -61,6 +61,14 @@
         <input type="text" id="luogoDestinazione" name="luogoDestinazione" maxlength="255" placeholder="Es. Aeroporto" required>
       </div>
       <div class="field">
+        <label for="numPostiMax">Numero di posti massimi</label>
+        <input type="number" id="numPostiMax" name="numPostiMax" min="0" placeholder="Es. 25" required>
+      </div>
+      <div class="field">
+        <label for="numPostiDisp">Numero di posti disponibili</label>
+        <input type="number" id="numPostiDisp" name="numPostiDisp" min="0" placeholder="Es. 25" required>
+      </div>
+      <div class="field">
         <label for="cfOperatoreInterno">Codice fiscale operatore interno</label>
         <input type="text" id="cfOperatoreInterno" name="cfOperatoreInterno" maxlength="16" placeholder="Facoltativo">
         <span class="hint">Dipendente incaricato della corsa.</span>
@@ -120,6 +128,8 @@
     document.getElementById('oraPartenza').value = navetta.oraPartenza || '';
     document.getElementById('luogoPartenza').value = navetta.luogoPartenza || '';
     document.getElementById('luogoDestinazione').value = navetta.luogoDestinazione || '';
+    document.getElementById('numPostiMax').value = navetta.numPostiMax || '';
+    document.getElementById('numPostiDisp').value = navetta.numPostiDisp || '';
     document.getElementById('cfOperatoreInterno').value = navetta.cfOperatoreInterno || '';
   }
 
@@ -184,6 +194,8 @@
       oraPartenza: document.getElementById('oraPartenza').value,
       luogoDestinazione: document.getElementById('luogoDestinazione').value.trim(),
       luogoPartenza: document.getElementById('luogoPartenza').value.trim(),
+      numPostiMax: document.getElementById('numPostiMax').value,
+      numPostiDisp: document.getElementById('numPostiDisp').value,
       cfOperatoreInterno: cfOperatoreInterno || null
     };
 

@@ -358,7 +358,7 @@ select {
 /* ---------- Dashboard (homepage cliente/dipendente) ---------- */
 
 .dashboard-shell {
-  max-width: 960px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 2.5rem 1.5rem 4rem;
 }
@@ -467,14 +467,14 @@ select {
 /* ---------- Pagine gestionali del dipendente (form + elenchi) ---------- */
 
 .manage-shell {
-  max-width: 1080px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 2.5rem 1.5rem 4rem;
 }
 
 .manage-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 380px) 1fr;
+  grid-template-columns: minmax(300px, 420px) 1fr;
   gap: 1.5rem;
   align-items: start;
 }
