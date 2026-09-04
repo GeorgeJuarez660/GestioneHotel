@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modifica guida - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/dipendente/guida}">&larr; Torna alle guide</a>
+</header>
+
+<main class="manage-shell" style="max-width:560px;">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow">Area Dipendente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">Modifica guida</h1>
+      <p class="dashboard-header__welcome" id="messaggioCodice"></p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel__header">
+      <h2 class="panel__title">Dati della visita</h2>
+    </div>
+    <hr class="divider-brass">
+
+    <div id="esito" class="esito" hidden></div>
+
+    <form id="formGuida" onsubmit="gestisciModifica(event)">
+      <div class="field">
+        <label for="codice">Codice</label>
+        <input type="text" id="codice" name="codice" maxlength="255" placeholder="Es. GUI-01" required>
+        <span class="hint">Puoi cambiarlo: il codice originale viene inviato a parte.</span>
+      </div>
+      <div class="field">
+        <label for="data">Data</label>
+        <input type="date" id="data" name="data" required>
+        <span class="hint">Non puo' essere una data passata.</span>
+      </div>
+      <div class="field">
+        <label for="ora">Ora</label>
+        <input type="time" id="ora" name="ora" required>
+      </div>
+      <div class="field">
+        <label for="luogo">Luogo</label>
+        <input type="text" id="luogo" name="luogo" maxlength="255" placeholder="Es. Centro storico" required>
+      </div>
+      <div class="field">
+        <label for="cfOperatoreInterno">Codice fiscale operatore interno</label>
+        <input type="text" id="cfOperatoreInterno" name="cfOperatoreInterno" maxlength="16" placeholder="Facoltativo">
+        <span class="hint">Guida interna: se non indicata si usa quella esterna.</span>
+      </div>
+      <div class="field">
+        <label for="cfOperatoreEsterno">Codice fiscale operatore esterno</label>
+        <input type="text" id="cfOperatoreEsterno" name="cfOperatoreEsterno" maxlength="16" placeholder="Facoltativo">
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Salva modifiche</button>
+        <p class="link-row"><a th:href="@{/hotel/dipendente/guida}">&larr; Torna all'elenco delle visite</a></p>
+      </div>
+    </form>
+  </section>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const ENDPOINT_DIPENDENTE = API_BASE + '/homepage/dipendente';
+  const CHIAVE_SESSIONE = 'guidaDaModificare';
+
+  const MESSAGGIO_ACCESSO_NEGATO = 'ACCESSO NEGATO: effettua di nuovo l\'accesso.';
+
+  /*
+   * Verifica dell'accesso prima delle operazioni protette: /check deve
+   * restituire un dipendente. Resta fuori il recupero dei dati della visita.
+   */
+  async function accessoConsentito() {
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/check', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + (recuperaToken() || '') }
+      });
+
+      if (!response.ok) return false;
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      return corpo !== null && typeof corpo === 'object' && corpo.id != null;
+    } catch (errore) {
+      return false;
+    }
+  }
+
+  const form = document.getElementById('formGuida');
+  const esito = document.getElementById('esito');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const messaggioCodice = document.getElementById('messaggioCodice');
+
+  // Codice con cui la guida e' registrata adesso: viaggia come parametro della
+  // PUT, cosi' il service sa quale riga aggiornare anche se il codice cambia.
+  const codiceVecchio = new URLSearchParams(window.location.search).get('codice') || '';
+
+  messaggioCodice.textContent = codiceVecchio ? ('Visita selezionata: ' + codiceVecchio) : 'Nessuna visita selezionata.';
+
+  function riempiForm(guida) {
+    document.getElementById('codice').value = guida.codice || '';
+    document.getElementById('data').value = guida.data || '';
+    document.getElementById('ora').value = guida.ora || '';
+    document.getElementById('luogo').value = guida.luogo || '';
+    document.getElementById('cfOperatoreInterno').value = guida.cfOperatoreInterno || '';
+    document.getElementById('cfOperatoreEsterno').value = guida.cfOperatoreEsterno || '';
+  }
+
+  /*
+   * La dto arriva dalla pagina di elenco tramite sessionStorage. Se la pagina
+   * viene ricaricata quel dato non c'e' piu': in quel caso si richiama
+   * direttamente /goToUpdateGuida con il codice preso dalla query string.
+   */
+  async function caricaGuida() {
+    nascondiEsito(esito);
+
+    const salvata = sessionStorage.getItem(CHIAVE_SESSIONE);
+
+    if (salvata) {
+      sessionStorage.removeItem(CHIAVE_SESSIONE);
+      riempiForm(JSON.parse(salvata));
+      return;
+    }
+
+    if (!codiceVecchio) {
+      mostraEsito(esito, 'Nessuna visita selezionata: torna all\'elenco e premi Modifica.', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/goToUpdateGuida/' + encodeURIComponent(codiceVecchio), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok && corpo) {
+        riempiForm(corpo);
+      } else {
+        mostraEsito(esito, corpo || 'Visita non trovata.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  async function gestisciModifica(event) {
+    event.preventDefault();
+    nascondiEsito(esito);
+
+    if (!codiceVecchio) {
+      mostraEsito(esito, 'Nessuna visita selezionata: torna all\'elenco e premi Modifica.', 'error');
+      return;
+    }
+
+    if (!(await accessoConsentito())) {
+      mostraEsito(esito, MESSAGGIO_ACCESSO_NEGATO, 'error');
+      return;
+    }
+
+    const cfOperatoreInterno = document.getElementById('cfOperatoreInterno').value.trim();
+    const cfOperatoreEsterno = document.getElementById('cfOperatoreEsterno').value.trim();
+
+    const corpoRichiesta = {
+      codice: document.getElementById('codice').value.trim(),
+      data: document.getElementById('data').value,
+      ora: document.getElementById('ora').value,
+      luogo: document.getElementById('luogo').value.trim(),
+      cfOperatoreInterno: cfOperatoreInterno || null,
+      cfOperatoreEsterno: cfOperatoreEsterno || null
+    };
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Salvataggio in corso...';
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/modifyGuida?codiceGuida=' + encodeURIComponent(codiceVecchio), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpoRichiesta)
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok) {
+        mostraEsito(esito, corpo || 'Guida modificata con successo.', 'success');
+      } else {
+        // In caso di errori di validazione il backend restituisce un array di messaggi.
+        mostraEsito(esito, corpo || 'Errore durante la modifica della guida.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Salva modifiche';
+    }
+  };
+
+  caricaGuida();
+</script>
+
+</body>
+</html>

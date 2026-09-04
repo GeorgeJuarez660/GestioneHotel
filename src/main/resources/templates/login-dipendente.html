@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accedi come dipendente - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/}">&larr; Torna alla scelta</a>
+</header>
+
+<main class="page-shell">
+  <div class="stack">
+    <section class="card">
+      <span class="card__eyebrow">Area Dipendente</span>
+      <h1 class="card__title">Accedi</h1>
+      <hr class="divider-brass">
+
+      <div id="esito" class="esito" hidden></div>
+
+      <form id="formLoginDipendente" onsubmit="gestisciLogin(event)">
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="Il tuo username" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="La tua password" required>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Accedi</button>
+          <p class="link-row">Non hai un account? <a th:href="@{/hotel/register-dipendente}">Registrati</a></p>
+        </div>
+      </form>
+    </section>
+  </div>
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const form = document.getElementById('formLoginDipendente');
+  const esito = document.getElementById('esito');
+  const btnSubmit = document.getElementById('btnSubmit');
+
+  async function gestisciLogin(event) {
+    event.preventDefault();
+    nascondiEsito(esito);
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    const params = new URLSearchParams({ username: username, password: password });
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Accesso in corso...';
+
+    try {
+      const response = await fetch(API_BASE + '/login/dipendente?' + params.toString(), {
+        method: 'GET'
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok) {
+        // Il backend restituisce il token JWT come testo semplice.
+        salvaToken(corpo);
+        mostraEsito(esito, 'Accesso effettuato. Reindirizzamento in corso...', 'success');
+        window.location.href = '/hotel/homepage/dipendente/';
+      } else {
+        mostraEsito(esito, corpo || 'Credenziali non valide.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Accedi';
+    }
+  };
+</script>
+
+</body>
+</html>

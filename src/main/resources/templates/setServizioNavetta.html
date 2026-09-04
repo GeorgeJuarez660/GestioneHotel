@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Servizio navetta - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/homepage/dipendente/}">&larr; Torna al pannello</a>
+</header>
+
+<main class="manage-shell">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow">Area Dipendente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">Servizio navetta</h1>
+      <p class="dashboard-header__welcome">Programma una nuova corsa e consulta quelle gia' pianificate.</p>
+    </div>
+  </div>
+
+  <div class="manage-grid">
+
+    <section class="panel">
+      <div class="panel__header">
+        <h2 class="panel__title">Nuova corsa</h2>
+      </div>
+      <hr class="divider-brass">
+
+      <div id="esito" class="esito" hidden></div>
+
+      <form id="formNavetta" onsubmit="gestisciInserimento(event)">
+        <div class="field">
+          <label for="codice">Codice</label>
+          <input type="text" id="codice" name="codice" maxlength="255" placeholder="Es. NAV-01" required>
+        </div>
+        <div class="field">
+          <label for="dataPartenza">Data di partenza</label>
+          <input type="date" id="dataPartenza" name="dataPartenza" required>
+          <span class="hint">Non puo' essere una data passata.</span>
+        </div>
+        <div class="field">
+          <label for="oraPartenza">Ora di partenza</label>
+          <input type="time" id="oraPartenza" name="oraPartenza" required>
+        </div>
+        <div class="field">
+          <label for="luogoPartenza">Luogo di partenza</label>
+          <input type="text" id="luogoPartenza" name="luogoPartenza" maxlength="255" placeholder="Es. Hotel" required>
+        </div>
+        <div class="field">
+          <label for="luogoDestinazione">Luogo di destinazione</label>
+          <input type="text" id="luogoDestinazione" name="luogoDestinazione" maxlength="255" placeholder="Es. Aeroporto" required>
+        </div>
+        <div class="field">
+          <label for="numPostiMax">Numero di posti massimi</label>
+          <input type="number" id="numPostiMax" name="numPostiMax" min="0" placeholder="Es. 25" required>
+        </div>
+        <div class="field">
+          <label for="numPostiDisp">Numero di posti disponibili</label>
+          <input type="number" id="numPostiDisp" name="numPostiDisp" min="0" placeholder="Es. 25" required>
+        </div>
+        <div class="field">
+          <label for="cfOperatoreInterno">Codice fiscale operatore interno</label>
+          <input type="text" id="cfOperatoreInterno" name="cfOperatoreInterno" maxlength="16" placeholder="Facoltativo">
+          <span class="hint">Dipendente incaricato della corsa.</span>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Aggiungi navetta</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel__header">
+        <h2 class="panel__title">Corse pianificate</h2>
+        <button type="button" class="btn btn-secondary btn-small" id="btnAggiorna">Aggiorna elenco</button>
+      </div>
+      <hr class="divider-brass">
+
+      <div id="esitoElenco" class="esito" hidden></div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Codice</th>
+              <th>Data</th>
+              <th>Ora</th>
+              <th>Partenza</th>
+              <th>Destinazione</th>
+              <th>Num Posti Max</th>
+              <th>Num Posti Disp</th>
+              <th>Operatore interno</th>
+              <th>Operatore esterno</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabella">
+            <tr><td class="data-table__empty" colspan="8">Caricamento in corso...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const ENDPOINT_DIPENDENTE = API_BASE + '/homepage/dipendente';
+
+  const MESSAGGIO_ACCESSO_NEGATO = 'ACCESSO NEGATO: effettua di nuovo l\'accesso.';
+
+  /*
+   * Verifica dell'accesso prima delle operazioni protette: /check deve
+   * restituire un dipendente. Restano fuori la lettura delle navette e gli
+   * spostamenti fra le pagine.
+   */
+  async function accessoConsentito() {
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/check', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + (recuperaToken() || '') }
+      });
+
+      if (!response.ok) return false;
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      return corpo !== null && typeof corpo === 'object' && corpo.id != null;
+    } catch (errore) {
+      return false;
+    }
+  }
+
+  const form = document.getElementById('formNavetta');
+  const esito = document.getElementById('esito');
+  const esitoElenco = document.getElementById('esitoElenco');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const corpoTabella = document.getElementById('corpoTabella');
+
+  function mostraRigaVuota(messaggio) {
+    corpoTabella.innerHTML = '';
+    const riga = document.createElement('tr');
+    const cella = document.createElement('td');
+    cella.className = 'data-table__empty';
+    cella.colSpan = 8;
+    cella.textContent = messaggio;
+    riga.appendChild(cella);
+    corpoTabella.appendChild(riga);
+  }
+
+  function creaRiga(navetta) {
+    const riga = document.createElement('tr');
+    const valori = [
+      navetta.codice,
+      navetta.dataPartenza,
+      navetta.oraPartenza,
+      navetta.luogoPartenza || 'Hotel',
+      navetta.luogoDestinazione,
+      navetta.numPostiMax,
+      navetta.numPostiDisp,
+      navetta.nomeOperatoreInterno + ' ' + navetta.cognomeOperatoreInterno || '-',
+      navetta.cfOperatoreEsterno || '-'
+    ];
+
+    valori.forEach(function (valore) {
+      const cella = document.createElement('td');
+      cella.textContent = valore;
+      riga.appendChild(cella);
+    });
+
+    const cellaAzioni = document.createElement('td');
+
+    const btnModifica = document.createElement('button');
+    btnModifica.type = 'button';
+    btnModifica.className = 'btn btn-secondary btn-small';
+    btnModifica.style.marginRight = '0.5rem';
+    btnModifica.textContent = 'Modifica';
+    btnModifica.addEventListener('click', function () {
+      modificaNavetta(navetta.codice);
+    });
+    cellaAzioni.appendChild(btnModifica);
+
+    const btnElimina = document.createElement('button');
+    btnElimina.type = 'button';
+    btnElimina.className = 'btn btn-secondary btn-small';
+    btnElimina.style.color = 'var(--color-rust)';
+    btnElimina.textContent = 'Elimina';
+    btnElimina.addEventListener('click', function () {
+      eliminaNavetta(navetta.codice);
+    });
+    cellaAzioni.appendChild(btnElimina);
+    riga.appendChild(cellaAzioni);
+
+    return riga;
+  }
+
+  /*
+   * Il click chiede la dto a /goToUpdateNavetta e la consegna alla pagina di
+   * modifica tramite sessionStorage; il codice viaggia anche in query string,
+   * cosi' updateNavetta.html sa quale riga sta modificando.
+   */
+  async function modificaNavetta(codice) {
+    nascondiEsito(esitoElenco);
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/goToUpdateNavetta/' + encodeURIComponent(codice), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (!response.ok || !corpo) {
+        mostraEsito(esitoElenco, corpo || 'Corsa non trovata.', 'error');
+        return;
+      }
+
+      sessionStorage.setItem('navettaDaModificare', JSON.stringify(corpo));
+      window.location.href = '/hotel/dipendente/modifica-navetta?codice=' + encodeURIComponent(codice);
+    } catch (errore) {
+      mostraEsito(esitoElenco, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  async function eliminaNavetta(codice) {
+    nascondiEsito(esitoElenco);
+
+    // Se l'utente annulla il pop-up non si chiama l'endpoint.
+    if (!confirm('Sei sicuro di voler eliminare la navetta ' + codice + '?')) return;
+
+    if (!(await accessoConsentito())) {
+      mostraEsito(esitoElenco, MESSAGGIO_ACCESSO_NEGATO, 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/removeNavetta?codice=' + encodeURIComponent(codice), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok) {
+        // Prima si ricarica l'elenco, poi si mostra l'esito: leggiNavette()
+        // comincia nascondendo il messaggio.
+        await leggiNavette();
+        mostraEsito(esitoElenco, corpo || 'Navetta eliminata con successo.', 'success');
+      } else {
+        mostraEsito(esitoElenco, corpo || 'Errore durante la rimozione della navetta.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esitoElenco, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  async function leggiNavette() {
+    nascondiEsito(esitoElenco);
+    mostraRigaVuota('Caricamento in corso...');
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/readNavette', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (!response.ok) {
+        mostraRigaVuota('Nessun dato disponibile.');
+        mostraEsito(esitoElenco, corpo || 'Errore durante la lettura delle navette.', 'error');
+        return;
+      }
+
+      if (!Array.isArray(corpo) || corpo.length === 0) {
+        mostraRigaVuota('Nessuna corsa pianificata.');
+        return;
+      }
+
+      corpoTabella.innerHTML = '';
+      corpo.forEach(function (navetta) {
+        corpoTabella.appendChild(creaRiga(navetta));
+      });
+    } catch (errore) {
+      mostraRigaVuota('Nessun dato disponibile.');
+      mostraEsito(esitoElenco, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  async function gestisciInserimento(event) {
+    event.preventDefault();
+    nascondiEsito(esito);
+
+    if (!(await accessoConsentito())) {
+      mostraEsito(esito, MESSAGGIO_ACCESSO_NEGATO, 'error');
+      return;
+    }
+
+    const cfOperatoreInterno = document.getElementById('cfOperatoreInterno').value.trim();
+
+    const corpoRichiesta = {
+      codice: document.getElementById('codice').value.trim(),
+      dataPartenza: document.getElementById('dataPartenza').value,
+      oraPartenza: document.getElementById('oraPartenza').value,
+      luogoDestinazione: document.getElementById('luogoDestinazione').value.trim(),
+      luogoPartenza: document.getElementById('luogoPartenza').value.trim(),
+      numPostiMax: document.getElementById('numPostiMax').value,
+      numPostiDisp: document.getElementById('numPostiDisp').value,
+      cfOperatoreInterno: cfOperatoreInterno || null
+    };
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Inserimento in corso...';
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/addNavetta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpoRichiesta)
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok) {
+        mostraEsito(esito, corpo || 'Navetta aggiunta con successo.', 'success');
+        form.reset();
+        leggiNavette();
+      } else {
+        // In caso di errori di validazione il backend restituisce un array di messaggi.
+        mostraEsito(esito, corpo || 'Errore durante l\'inserimento della navetta.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Aggiungi navetta';
+    }
+  };
+
+  document.getElementById('btnAggiorna').addEventListener('click', leggiNavette);
+
+  leggiNavette();
+</script>
+
+</body>
+</html>

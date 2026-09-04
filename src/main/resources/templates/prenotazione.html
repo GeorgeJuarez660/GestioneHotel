@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestione prenotazioni - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+<style>
+  /*
+   * Stili locali alla pagina: qui le colonne sono dieci, contro le sette/otto
+   * delle altre schermate, quindi il contenitore standard da 1080px non basta
+   * e la tabella finisce sotto scorrimento orizzontale.
+   */
+  .manage-shell {
+    max-width: min(1600px, 96vw);
+  }
+
+  /* I valori brevi restano su una riga sola: e' il testo spezzato a far
+     crescere l'altezza delle righe senza guadagnare spazio. */
+  .data-table td {
+    white-space: nowrap;
+  }
+
+  /* Le note sono l'unica colonna davvero lunga: le si lascia andare a capo
+     entro una larghezza massima invece di allargare tutta la tabella. */
+  .data-table td:nth-child(9) {
+    white-space: normal;
+    max-width: 320px;
+  }
+</style>
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/homepage/dipendente/}">&larr; Torna al pannello</a>
+</header>
+
+<main class="manage-shell">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow">Area Dipendente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">Gestione prenotazioni</h1>
+      <p class="dashboard-header__welcome">Elenco completo delle prenotazioni registrate nel sistema.</p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel__header">
+      <h2 class="panel__title">Prenotazioni</h2>
+      <button type="button" class="btn btn-secondary btn-small" id="btnAggiorna">Aggiorna elenco</button>
+    </div>
+    <hr class="divider-brass">
+
+    <div id="esitoElenco" class="esito" hidden></div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Codice</th>
+            <th>Cliente</th>
+            <th>Prenotata il</th>
+            <th>Data inizio</th>
+            <th>Data fine</th>
+            <th>Prezzo tot. iniziale</th>
+            <th>Prezzo tot. effettivo</th>
+            <th>Stato Pr.</th>
+            <th>Receptionist</th>
+            <th>Note</th>
+            <th>Azioni</th>
+          </tr>
+        </thead>
+        <tbody id="corpoTabella">
+          <tr><td class="data-table__empty" colspan="11">Caricamento in corso...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const ENDPOINT_DIPENDENTE = API_BASE + '/homepage/dipendente';
+
+  const MESSAGGIO_ACCESSO_NEGATO = 'ACCESSO NEGATO: effettua di nuovo l\'accesso.';
+
+  /*
+   * Verifica dell'accesso prima delle operazioni protette: /check deve
+   * restituire un dipendente. Qui vale per la lettura e la rimozione delle
+   * prenotazioni; resta fuori lo spostamento verso la pagina di modifica.
+   */
+  async function accessoConsentito() {
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/check', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + (recuperaToken() || '') }
+      });
+
+      if (!response.ok) return false;
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      return corpo !== null && typeof corpo === 'object' && corpo.id != null;
+    } catch (errore) {
+      return false;
+    }
+  }
+
+  const esitoElenco = document.getElementById('esitoElenco');
+  const corpoTabella = document.getElementById('corpoTabella');
+
+  function mostraRigaVuota(messaggio) {
+    corpoTabella.innerHTML = '';
+    const riga = document.createElement('tr');
+    const cella = document.createElement('td');
+    cella.className = 'data-table__empty';
+    cella.colSpan = 11;
+    cella.textContent = messaggio;
+    riga.appendChild(cella);
+    corpoTabella.appendChild(riga);
+  }
+
+  /*
+   * Completa una riga con i dati che l'elenco non porta con se'. In caso di
+   * errore le celle restano con il trattino, senza far saltare la tabella.
+   */
+  function creaCella(riga, valore) {
+    const cella = document.createElement('td');
+    cella.textContent = (valore === null || valore === undefined || valore === '') ? '-' : valore;
+    riga.appendChild(cella);
+
+    return cella;
+  }
+
+  function nominativo(nome, cognome) {
+    const parti = [];
+
+    if (nome) parti.push(nome);
+    if (cognome) parti.push(cognome);
+
+    return parti.join(' ');
+  }
+
+  /*
+   * Raccoglie i valori diversi di un campo dentro il gruppo: se la prenotazione
+   * arriva su piu' righe (per esempio una stanza per riga) i valori che
+   * cambiano vengono mostrati insieme invece di perderne alcuni.
+   */
+  function valoriDistinti(gruppo, estrai) {
+    const valori = [];
+
+    gruppo.forEach(function (voce) {
+      const valore = estrai(voce);
+
+      if (valore === null || valore === undefined || valore === '') return;
+
+      const testo = String(valore);
+      if (valori.indexOf(testo) === -1) valori.push(testo);
+    });
+
+    return valori.join(' / ');
+  }
+
+  // Una riga per codice: le voci con lo stesso codice finiscono nello stesso gruppo.
+  function raggruppaPerCodice(prenotazioni) {
+    const gruppi = new Map();
+
+    prenotazioni.forEach(function (prenotazione) {
+      const codice = prenotazione.codice;
+
+      if (!gruppi.has(codice)) gruppi.set(codice, []);
+
+      gruppi.get(codice).push(prenotazione);
+    });
+
+    return Array.from(gruppi.values());
+  }
+
+  function creaRiga(gruppo) {
+    const prenotazione = gruppo[0];
+    const riga = document.createElement('tr');
+
+    creaCella(riga, prenotazione.codice);
+    creaCella(riga, valoriDistinti(gruppo, function (voce) { return nominativo(voce.nomeCliente, voce.cognomeCliente); }));
+    creaCella(riga, valoriDistinti(gruppo, function (voce) { return voce.dataPrenotazione; }));
+    creaCella(riga, valoriDistinti(gruppo, function (voce) { return voce.dataInizio; }));
+    creaCella(riga, valoriDistinti(gruppo, function (voce) { return voce.dataFine; }));
+    creaCella(riga, valoriDistinti(gruppo, function (voce) { return voce.prezzoTotale; }));
+    creaCella(riga, valoriDistinti(gruppo, function (voce) { return voce.prezzoEffettivo; }));
+    creaCella(riga, valoriDistinti(gruppo, function (voce) { return voce.statoPrenotazione; }));
+    creaCella(riga, valoriDistinti(gruppo, function (voce) { return nominativo(voce.nomeReceptionist, voce.cognomeReceptionist); }));
+    creaCella(riga, valoriDistinti(gruppo, function (voce) { return voce.note; }));
+
+    const cellaAzioni = document.createElement('td');
+
+    const btnModifica = document.createElement('button');
+    btnModifica.type = 'button';
+    btnModifica.className = 'btn btn-secondary btn-small';
+    btnModifica.style.marginRight = '0.5rem';
+    btnModifica.textContent = 'Modifica';
+    btnModifica.addEventListener('click', function () {
+      modificaPrenotazione(prenotazione.codice);
+    });
+    cellaAzioni.appendChild(btnModifica);
+
+    const btnElimina = document.createElement('button');
+    btnElimina.type = 'button';
+    btnElimina.className = 'btn btn-secondary btn-small';
+    btnElimina.style.color = 'var(--color-rust)';
+    btnElimina.textContent = 'Elimina';
+    btnElimina.addEventListener('click', function () {
+      eliminaPrenotazione(prenotazione.codice);
+    });
+    cellaAzioni.appendChild(btnElimina);
+    riga.appendChild(cellaAzioni);
+
+    return riga;
+  }
+
+  /*
+   * Il click chiede la PrenotazioneInfo a /goToUpdatePrenotazione e la consegna
+   * alla pagina di modifica tramite sessionStorage; il codice viaggia anche in
+   * query string, cosi' updatePrenotazione.html sa quale riga sta modificando.
+   */
+  async function modificaPrenotazione(codice) {
+    nascondiEsito(esitoElenco);
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/goToUpdatePrenotazione/' + encodeURIComponent(codice), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (!response.ok || !corpo) {
+        mostraEsito(esitoElenco, corpo || 'Prenotazione non trovata.', 'error');
+        return;
+      }
+
+      sessionStorage.setItem('prenotazioneDaModificare', JSON.stringify(corpo));
+      window.location.href = '/hotel/dipendente/modifica-prenotazione?codice=' + encodeURIComponent(codice);
+    } catch (errore) {
+      mostraEsito(esitoElenco, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  async function eliminaPrenotazione(codice) {
+    nascondiEsito(esitoElenco);
+
+    // Se l'utente annulla il pop-up non si chiama l'endpoint.
+    if (!confirm('Sei sicuro di voler eliminare la prenotazione ' + codice + '?')) return;
+
+    if (!(await accessoConsentito())) {
+      mostraEsito(esitoElenco, MESSAGGIO_ACCESSO_NEGATO, 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/removePrenotazione?codice=' + encodeURIComponent(codice), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok) {
+        // Prima si ricarica l'elenco, poi si mostra l'esito: caricaPrenotazioni()
+        // comincia nascondendo il messaggio.
+        await caricaPrenotazioni();
+        mostraEsito(esitoElenco, corpo || 'Prenotazione eliminata con successo.', 'success');
+      } else {
+        mostraEsito(esitoElenco, corpo || 'Errore durante la rimozione della prenotazione.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esitoElenco, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  async function caricaPrenotazioni() {
+    nascondiEsito(esitoElenco);
+    mostraRigaVuota('Caricamento in corso...');
+
+    if (!(await accessoConsentito())) {
+      mostraRigaVuota('Nessun dato disponibile.');
+      mostraEsito(esitoElenco, MESSAGGIO_ACCESSO_NEGATO, 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/readPrenotazioni', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (!response.ok) {
+        mostraRigaVuota('Nessun dato disponibile.');
+        mostraEsito(esitoElenco, corpo || 'Errore durante la lettura delle prenotazioni.', 'error');
+        return;
+      }
+
+      if (!Array.isArray(corpo) || corpo.length === 0) {
+        mostraRigaVuota('Nessuna prenotazione registrata.');
+        return;
+      }
+
+      corpoTabella.innerHTML = '';
+      raggruppaPerCodice(corpo).forEach(function (gruppo) {
+        corpoTabella.appendChild(creaRiga(gruppo));
+      });
+    } catch (errore) {
+      mostraRigaVuota('Nessun dato disponibile.');
+      mostraEsito(esitoElenco, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  document.getElementById('btnAggiorna').addEventListener('click', caricaPrenotazioni);
+
+  caricaPrenotazioni();
+</script>
+
+</body>
+</html>

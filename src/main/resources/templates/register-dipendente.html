@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registrati come dipendente - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/}">&larr; Torna alla scelta</a>
+</header>
+
+<main class="page-shell">
+  <div class="stack">
+    <section class="card">
+      <span class="card__eyebrow">Area Dipendente</span>
+      <h1 class="card__title">Registrati</h1>
+      <hr class="divider-brass">
+
+      <div id="esito" class="esito" hidden></div>
+
+      <form id="formRegisterDipendente" onsubmit="gestisciRegistrazione(event)">
+        <div class="field">
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" name="nome" maxlength="100" placeholder="Mario" required>
+        </div>
+        <div class="field">
+          <label for="cognome">Cognome</label>
+          <input type="text" id="cognome" name="cognome" maxlength="100" placeholder="Rossi" required>
+        </div>
+        <div class="field">
+          <label for="codiceFiscale">Codice fiscale</label>
+          <input type="text" id="codiceFiscale" name="codiceFiscale" maxlength="16" placeholder="16 caratteri alfanumerici" required>
+          <span class="hint">Esattamente 16 caratteri, solo lettere e numeri.</span>
+        </div>
+        <div class="field">
+          <label for="dataNascita">Data di nascita</label>
+          <input type="date" id="dataNascita" name="dataNascita" required>
+        </div>
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" minlength="3" maxlength="50" placeholder="Da 3 a 50 caratteri" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" minlength="8" maxlength="100" placeholder="Almeno 8 caratteri" required>
+        </div>
+        <div class="field">
+          <label for="lingua">Lingua parlata</label>
+          <input type="text" id="lingua" name="lingua" maxlength="50" placeholder="Es. Italiano" required>
+        </div>
+        <div class="field">
+          <label for="categoria">Categoria dipendente</label>
+          <select id="categoriaTipo" name="categoriaTipo" required>
+            <option value="RECEPTIONIST">RECEPTIONIST</option>
+            <option value="OPERATORE_INTERNO">OPERATORE INTERNO</option>
+          </select>
+          <span class="hint">Nome della categoria a cui appartiene il dipendente.</span>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Registrati</button>
+          <p class="link-row">Hai gia' un account? <a th:href="@{/hotel/login-dipendente}">Accedi</a></p>
+        </div>
+      </form>
+    </section>
+  </div>
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const form = document.getElementById('formRegisterDipendente');
+  const esito = document.getElementById('esito');
+  const btnSubmit = document.getElementById('btnSubmit');
+
+  async function gestisciRegistrazione(event)  {
+    event.preventDefault();
+    nascondiEsito(esito);
+
+    const corpoRichiesta = {
+      nome: document.getElementById('nome').value.trim(),
+      cognome: document.getElementById('cognome').value.trim(),
+      codiceFiscale: document.getElementById('codiceFiscale').value.trim(),
+      dataNascita: document.getElementById('dataNascita').value,
+      username: document.getElementById('username').value.trim(),
+      password: document.getElementById('password').value,
+      lingua: document.getElementById('lingua').value.trim(),
+      categoria: document.getElementById('categoriaTipo').value.trim()
+    };
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Registrazione in corso...';
+
+    try {
+      const response = await fetch(API_BASE + '/register/dipendente', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpoRichiesta)
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok) {
+        mostraEsito(esito, corpo || 'Registrazione avvenuta con successo.', 'success');
+        form.reset();
+      } else {
+        // In caso di errori di validazione il backend restituisce un array di messaggi.
+        mostraEsito(esito, corpo || 'Errore durante la registrazione.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Registrati';
+    }
+  };
+</script>
+
+</body>
+</html>
