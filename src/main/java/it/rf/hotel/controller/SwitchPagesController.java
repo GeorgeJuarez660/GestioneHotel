@@ -10,6 +10,11 @@ public class SwitchPagesController {
 
     @GetMapping("/")
     public String start() {
+        return "dashboard";
+    }
+
+    @GetMapping("/choose-register-login")
+    public String choose() {
         return "chooseRegisterLogin";
     }
 

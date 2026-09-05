@@ -5,6 +5,7 @@ import it.rf.hotel.dto.RegisterDipendenteRequest;
 import it.rf.hotel.exception.CFDuplicatoException;
 import it.rf.hotel.exception.NotClienteFoundExpcetion;
 import it.rf.hotel.exception.NotDipendenteFoundException;
+import it.rf.hotel.exception.UnderageUtenteException;
 import it.rf.hotel.model.CategoriaDipendente;
 import it.rf.hotel.model.Cliente;
 import it.rf.hotel.model.Dipendente;
@@ -15,6 +16,8 @@ import it.rf.hotel.repository.DipendenteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,12 +33,19 @@ public class LoginRegisterService {
     @Autowired
     private CategoriaDipendenteRepository categoriaDipendenteRepository;
 
-    public String registraCliente(RegisterClienteRequest dto) throws CFDuplicatoException {
+    public String registraCliente(RegisterClienteRequest dto) throws CFDuplicatoException, UnderageUtenteException {
         Cliente cliente;
         String esito;
 
         if (clienteRepository.countByCodiceFiscale(dto.getCodiceFiscale()) > 0L) {
             throw new CFDuplicatoException(dto.getCodiceFiscale());
+        }
+
+        int anni = Period.between(dto.getDataNascita(), LocalDate.now()).getYears();
+        
+        // È maggiorenne se è nato prima o esattamente 18 anni fa
+        if (anni < 18) {
+            throw new UnderageUtenteException();
         }
         else{
             cliente = new Cliente();
@@ -53,12 +63,19 @@ public class LoginRegisterService {
         return esito;
     }
 
-    public String registraDipendente(RegisterDipendenteRequest dto) throws CFDuplicatoException {
+    public String registraDipendente(RegisterDipendenteRequest dto) throws CFDuplicatoException, UnderageUtenteException {
         Dipendente dipendente;
         String esito;
 
         if (dipendenteRepository.countByCodiceFiscale(dto.getCodiceFiscale()) > 0L) {
             throw new CFDuplicatoException(dto.getCodiceFiscale());
+        }
+
+        int anni = Period.between(dto.getDataNascita(), LocalDate.now()).getYears();
+        
+        // È maggiorenne se è nato prima o esattamente 18 anni fa
+        if (anni < 18) {
+            throw new UnderageUtenteException();
         }
         else{
 

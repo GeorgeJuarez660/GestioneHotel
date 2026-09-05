@@ -6,6 +6,7 @@ import it.rf.hotel.dto.RegisterDipendenteRequest;
 import it.rf.hotel.exception.CFDuplicatoException;
 import it.rf.hotel.exception.NotClienteFoundExpcetion;
 import it.rf.hotel.exception.NotDipendenteFoundException;
+import it.rf.hotel.exception.UnderageUtenteException;
 import it.rf.hotel.model.Cliente;
 import it.rf.hotel.model.Dipendente;
 import it.rf.hotel.service.LoginRegisterService;
@@ -43,6 +44,10 @@ public class LoginRegisterController {
             System.out.println("Prova a inserire un altro CF");
 			
 			return ResponseEntity.status(HttpStatusCode.valueOf(409)).body("ERRORE DUPLICATO CF");
+        } catch (UnderageUtenteException exception) {
+            System.out.println("L'utente deve essere maggiorenne!");
+			
+			return ResponseEntity.status(HttpStatusCode.valueOf(400)).body("ERRORE ETA' MINIMA");
         } catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE REGISTRAZIONE");
         }
@@ -58,6 +63,10 @@ public class LoginRegisterController {
             System.out.println("Prova a inserire un altro CF");
 			
 			return ResponseEntity.status(HttpStatusCode.valueOf(409)).body("ERRORE DUPLICATO CF");
+        } catch (UnderageUtenteException exception) {
+            System.out.println("L'utente deve essere maggiorenne!");
+			
+			return ResponseEntity.status(HttpStatusCode.valueOf(400)).body("ERRORE ETA' MINIMA");
         } catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE REGISTRAZIONE");
         }
