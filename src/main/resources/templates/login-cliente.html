@@ -16,7 +16,7 @@
     </svg>
     Gestionale Hotel
   </div>
-  <a class="brandbar__back" th:href="@{/hotel/choose-register-login}">&larr; Torna alla scelta</a>
+  <a class="brandbar__back" th:href="@{/hotel/}">&larr; Torna alla scelta</a>
 </header>
 
 <main class="page-shell">
@@ -42,6 +42,7 @@
           <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Accedi</button>
           <button type="button" class="btn btn-secondary btn-block" id="btnOspite">Entra come ospite</button>
           <p class="link-row">Non hai un account? <a th:href="@{/hotel/register-cliente}">Registrati</a></p>
+          <p class="link-row">Sei dello staff? <a th:href="@{/hotel/login-dipendente}">Accedi come dipendente</a></p>
         </div>
       </form>
     </section>

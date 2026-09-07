@@ -5,6 +5,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Modifica prenotazione - Gestionale Hotel</title>
 <link rel="stylesheet" th:href="@{/css/style.css}">
+<style>
+  /* Stili locali alla pagina: le caselle di spunta non sono previste da style.css */
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem 0;
+  }
+
+  .check-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--color-brass);
+    border: none;
+    padding: 0;
+  }
+
+  .check-row label {
+    font-size: 0.85rem;
+    letter-spacing: 0;
+    text-transform: none;
+    font-weight: 400;
+    color: var(--color-ivory);
+    flex: 1;
+  }
+
+  /* Quantita' ordinata: resta spenta finche' la bevanda non e' spuntata. */
+  .check-row input[type="number"] {
+    width: 68px;
+    flex-shrink: 0;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .check-row input[type="number"]:disabled {
+    opacity: 0.4;
+  }
+
+  .riepilogo-riga {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.85rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--color-ink-border);
+  }
+
+  .riepilogo-riga__voce {
+    color: var(--color-ivory-dim);
+  }
+
+  .riepilogo-totale {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--color-brass-dim);
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--color-brass-strong);
+  }
+
+  .riepilogo-vuoto {
+    font-size: 0.85rem;
+    color: var(--color-ivory-dim);
+  }
+</style>
 </head>
 <body>
 
@@ -19,7 +88,7 @@
   <a class="brandbar__back" th:href="@{/hotel/dipendente/prenotazioni}">&larr; Torna alle prenotazioni</a>
 </header>
 
-<main class="manage-shell" style="max-width:560px;">
+<main class="manage-shell">
 
   <div class="dashboard-header">
     <div>
@@ -28,6 +97,8 @@
       <p class="dashboard-header__welcome" id="messaggioCodice"></p>
     </div>
   </div>
+
+  <div class="manage-grid">
 
   <section class="panel">
     <div class="panel__header">
@@ -105,6 +176,48 @@
       </div>
     </form>
   </section>
+
+  <section class="panel">
+    <div class="panel__header">
+      <h2 class="panel__title">Conto della camera</h2>
+      <button type="button" class="btn btn-secondary btn-small" id="btnAggiornaConto">Aggiorna elenchi</button>
+    </div>
+    <hr class="divider-brass">
+
+    <div id="esitoConto" class="esito" hidden></div>
+
+    <span class="card__eyebrow">Consumazioni</span>
+    <p class="hint" style="margin-bottom:0.8rem;">Spunta le bevande consumate e indica la quantita'.</p>
+    <div id="elencoBevande">
+      <p class="riepilogo-vuoto">Caricamento in corso...</p>
+    </div>
+
+    <hr class="divider-brass">
+
+    <span class="card__eyebrow">Corse in taxi</span>
+    <p class="hint" style="margin-bottom:0.8rem;">Corse registrate a nome dell'intestatario di questa prenotazione.</p>
+    <div id="elencoTaxi">
+      <p class="riepilogo-vuoto">Caricamento in corso...</p>
+    </div>
+
+    <hr class="divider-brass">
+
+    <span class="card__eyebrow">Riepilogo addebiti</span>
+    <div id="riepilogo">
+      <p class="riepilogo-vuoto">Nessun addebito selezionato.</p>
+    </div>
+
+    <div class="riepilogo-totale">
+      <span>Totale addebiti</span>
+      <span id="totale">0.00 &euro;</span>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary btn-block" id="btnAddebita">Somma al prezzo totale</button>
+    </div>
+  </section>
+
+  </div>
 
 </main>
 
@@ -276,7 +389,278 @@
     }
   };
 
+  /* ---------- Conto della camera: consumazioni e taxi ---------- */
+
+  const esitoConto = document.getElementById('esitoConto');
+  const elencoBevande = document.getElementById('elencoBevande');
+  const elencoTaxi = document.getElementById('elencoTaxi');
+  const riepilogo = document.getElementById('riepilogo');
+  const totale = document.getElementById('totale');
+
+  function formattaEuro(valore) {
+    return Number(valore || 0).toFixed(2) + ' \u20AC';
+  }
+
+  function mostraElencoVuoto(contenitore, messaggio) {
+    contenitore.innerHTML = '';
+    const vuoto = document.createElement('p');
+    vuoto.className = 'riepilogo-vuoto';
+    vuoto.textContent = messaggio;
+    contenitore.appendChild(vuoto);
+  }
+
+  function aggiungiRigaRiepilogo(voce, importo) {
+    const riga = document.createElement('div');
+    riga.className = 'riepilogo-riga';
+
+    const testo = document.createElement('span');
+    testo.className = 'riepilogo-riga__voce';
+    testo.textContent = voce;
+
+    const valore = document.createElement('span');
+    valore.textContent = formattaEuro(importo);
+
+    riga.appendChild(testo);
+    riga.appendChild(valore);
+    riepilogo.appendChild(riga);
+  }
+
+  /*
+   * Riepilogo degli addebiti: per le bevande il prezzo effettivo si calcola
+   * come nel service (prezzo base per quantita' ordinata), per i taxi si prende
+   * il prezzo della corsa. E' un preventivo a schermo: le righe di consuma e
+   * le corse le scrive il backend, questa pagina non le salva.
+   */
+  function aggiornaRiepilogo() {
+    let sommaTotale = 0;
+
+    riepilogo.innerHTML = '';
+
+    elencoBevande.querySelectorAll('input[type="checkbox"]').forEach(function (spunta) {
+      const campoQuantita = document.getElementById('quantita-' + spunta.dataset.indice);
+      campoQuantita.disabled = !spunta.checked;
+
+      if (!spunta.checked) return;
+
+      const quantita = Number(campoQuantita.value) || 0;
+      const prezzoEffettivo = Number(spunta.dataset.prezzoBase) * quantita;
+
+      sommaTotale = sommaTotale + prezzoEffettivo;
+      aggiungiRigaRiepilogo(spunta.dataset.nome + ' x' + quantita, prezzoEffettivo);
+    });
+
+    elencoTaxi.querySelectorAll('input[type="checkbox"]').forEach(function (spunta) {
+      if (!spunta.checked) return;
+
+      const prezzo = Number(spunta.dataset.prezzo);
+
+      sommaTotale = sommaTotale + prezzo;
+      aggiungiRigaRiepilogo('Taxi ' + spunta.dataset.tratta, prezzo);
+    });
+
+    if (riepilogo.children.length === 0) {
+      mostraElencoVuoto(riepilogo, 'Nessun addebito selezionato.');
+    }
+
+    totale.textContent = formattaEuro(sommaTotale);
+
+    return sommaTotale;
+  }
+
+  function creaRigaBevanda(bevanda, indice) {
+    const riga = document.createElement('div');
+    riga.className = 'check-row';
+
+    const spunta = document.createElement('input');
+    spunta.type = 'checkbox';
+    spunta.id = 'bevanda-' + indice;
+    spunta.dataset.indice = indice;
+    spunta.dataset.nome = bevanda.nome;
+    spunta.dataset.prezzoBase = bevanda.prezzoBase;
+    spunta.addEventListener('change', aggiornaRiepilogo);
+
+    const etichetta = document.createElement('label');
+    etichetta.htmlFor = spunta.id;
+    etichetta.textContent = bevanda.nome + ' - ' + formattaEuro(bevanda.prezzoBase);
+
+    const campoQuantita = document.createElement('input');
+    campoQuantita.type = 'number';
+    campoQuantita.id = 'quantita-' + indice;
+    campoQuantita.min = '1';
+    campoQuantita.value = '1';
+    campoQuantita.disabled = true;
+    campoQuantita.addEventListener('input', aggiornaRiepilogo);
+
+    riga.appendChild(spunta);
+    riga.appendChild(etichetta);
+    riga.appendChild(campoQuantita);
+
+    return riga;
+  }
+
+  function creaRigaTaxi(taxi, indice) {
+    const riga = document.createElement('div');
+    riga.className = 'check-row';
+
+    const tratta = (taxi.luogoPartenza || '?') + ' -> ' + (taxi.luogoDestinazione || '?');
+
+    const spunta = document.createElement('input');
+    spunta.type = 'checkbox';
+    spunta.id = 'taxi-' + indice;
+    spunta.dataset.prezzo = taxi.prezzo;
+    spunta.dataset.tratta = tratta;
+    spunta.addEventListener('change', aggiornaRiepilogo);
+
+    const etichetta = document.createElement('label');
+    etichetta.htmlFor = spunta.id;
+    etichetta.textContent = tratta + ' (' + (taxi.data || '') + ') - ' + formattaEuro(taxi.prezzo);
+
+    riga.appendChild(spunta);
+    riga.appendChild(etichetta);
+
+    return riga;
+  }
+
+  async function leggiBevande() {
+    mostraElencoVuoto(elencoBevande, 'Caricamento in corso...');
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/readBevande', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (!response.ok || !Array.isArray(corpo) || corpo.length === 0) {
+        mostraElencoVuoto(elencoBevande, 'Nessuna bevanda a listino.');
+        return;
+      }
+
+      elencoBevande.innerHTML = '';
+      corpo.forEach(function (bevanda, indice) {
+        elencoBevande.appendChild(creaRigaBevanda(bevanda, indice));
+      });
+    } catch (errore) {
+      mostraElencoVuoto(elencoBevande, 'Nessun dato disponibile.');
+      mostraEsito(esitoConto, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  // Intestatario della prenotazione: e' la chiave con cui TaxiRequest lega la corsa.
+  let possessore = null;
+
+  /*
+   * TaxiRequest identifica il possessore con nome e cognome, non con il codice
+   * della prenotazione: prima si ricava l'intestatario da /readPrenotazioni,
+   * poi si filtrano le corse su quel nominativo.
+   */
+  async function leggiPossessore() {
+    possessore = null;
+
+    if (!codiceVecchio) return;
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/readPrenotazioni', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (!response.ok || !Array.isArray(corpo)) return;
+
+      const prenotazione = corpo.find(function (voce) {
+        return voce.codice === codiceVecchio;
+      });
+
+      if (prenotazione) {
+        possessore = {
+          nome: prenotazione.nomeCliente || '',
+          cognome: prenotazione.cognomeCliente || ''
+        };
+      }
+    } catch (errore) {
+      possessore = null;
+    }
+  }
+
+  async function leggiTaxi() {
+    mostraElencoVuoto(elencoTaxi, 'Caricamento in corso...');
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/readTaxi', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (!response.ok || !Array.isArray(corpo)) {
+        mostraElencoVuoto(elencoTaxi, 'Nessuna corsa disponibile.');
+        return;
+      }
+
+      if (!possessore) {
+        mostraElencoVuoto(elencoTaxi, 'Intestatario della prenotazione non individuato.');
+        return;
+      }
+
+      const corse = corpo.filter(function (taxi) {
+        return taxi.nomePossessore === possessore.nome && taxi.cognomePossessore === possessore.cognome;
+      });
+
+      if (corse.length === 0) {
+        mostraElencoVuoto(elencoTaxi, 'Nessuna corsa a nome di questo cliente.');
+        return;
+      }
+
+      elencoTaxi.innerHTML = '';
+      corse.forEach(function (taxi, indice) {
+        elencoTaxi.appendChild(creaRigaTaxi(taxi, indice));
+      });
+    } catch (errore) {
+      mostraElencoVuoto(elencoTaxi, 'Nessun dato disponibile.');
+      mostraEsito(esitoConto, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  async function caricaConto() {
+    nascondiEsito(esitoConto);
+
+    await leggiBevande();
+    await leggiPossessore();
+    await leggiTaxi();
+
+    aggiornaRiepilogo();
+  }
+
+  /*
+   * Gli addebiti selezionati finiscono nel campo "Prezzo totale": il salvataggio
+   * vero e proprio resta quello del form, cosi' il conto passa dalla PUT gia'
+   * esistente senza endpoint aggiuntivi.
+   */
+  document.getElementById('btnAddebita').addEventListener('click', function () {
+    nascondiEsito(esitoConto);
+
+    const addebiti = aggiornaRiepilogo();
+
+    if (addebiti === 0) {
+      mostraEsito(esitoConto, 'Nessun addebito selezionato.', 'info');
+      return;
+    }
+
+    const campoPrezzo = document.getElementById('prezzoTotale');
+    const prezzoAttuale = Number(campoPrezzo.value) || 0;
+
+    campoPrezzo.value = (prezzoAttuale + addebiti).toFixed(2);
+    mostraEsito(esitoConto, 'Addebiti sommati al prezzo totale: ricorda di salvare le modifiche.', 'success');
+  });
+
+  document.getElementById('btnAggiornaConto').addEventListener('click', caricaConto);
+
   caricaPrenotazione();
+  caricaConto();
 </script>
 
 </body>

@@ -13,11 +13,6 @@ public class SwitchPagesController {
         return "dashboard";
     }
 
-    @GetMapping("/choose-register-login")
-    public String choose() {
-        return "chooseRegisterLogin";
-    }
-
     @GetMapping("/register-cliente")
     public String registerCliente() {
         return "register-cliente";
@@ -80,6 +75,21 @@ public class SwitchPagesController {
         return "setServizioNavetta";
     }
 
+    @GetMapping("/dipendente/taxi")
+    public String taxiDipendente() {
+        return "setTaxi";
+    }
+
+    @GetMapping("/cliente/taxi")
+    public String taxiCliente() {
+        return "setTaxi";
+    }
+
+    @GetMapping("/dipendente/bevande")
+    public String bevandaDipendente() {
+        return "insertBevanda";
+    }
+
     @GetMapping("/dipendente/pacchetti")
     public String pacchettiDipendente() {
         return "insertPacchetti";
@@ -98,6 +108,11 @@ public class SwitchPagesController {
     @GetMapping("/dipendente/modifica-stanza")
     public String modificaStanzaDipendente() {
         return "updateStanza";
+    }
+
+    @GetMapping("/dipendente/modifica-bevanda")
+    public String modificaBevandaDipendente() {
+        return "updateBevanda";
     }
 
     @GetMapping("/dipendente/modifica-navetta")

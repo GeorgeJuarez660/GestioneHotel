@@ -128,6 +128,38 @@
       </div>
     </a>
 
+    <a class="action-card" th:href="@{/hotel/dipendente/bevande}">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 3h14l-7 8v8"></path>
+          <path d="M8 19h8 M7.5 7h9"></path>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Gestione bevande</h2>
+      <p class="action-card__desc">Aggiorna il listino delle bevande addebitabili in camera.</p>
+      <div>
+        <span class="action-card__count" id="contatoreBevande">-</span>
+        <span class="action-card__count-label">a listino</span>
+      </div>
+    </a>
+
+    <a class="action-card" th:href="@{/hotel/dipendente/taxi}">
+      <div class="action-card__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 17v-4l2-5h14l2 5v4"></path>
+          <path d="M3 17v2 M21 17v2 M9 3h6v3"></path>
+          <circle cx="7.5" cy="16.5" r="1.5"></circle>
+          <circle cx="16.5" cy="16.5" r="1.5"></circle>
+        </svg>
+      </div>
+      <h2 class="action-card__title">Servizio taxi</h2>
+      <p class="action-card__desc">Registra le corse in taxi e addebitale sul conto del soggiorno.</p>
+      <div>
+        <span class="action-card__count" id="contatoreTaxi">-</span>
+        <span class="action-card__count-label">corse registrate</span>
+      </div>
+    </a>
+
     <a class="action-card" th:href="@{/hotel/dipendente/feedback}">
       <div class="action-card__icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -215,6 +247,8 @@
   contaElementi('/readPiscine', document.getElementById('contatorePiscine'));
   contaElementi('/readStanze', document.getElementById('contatoreStanze'));
   contaElementi('/readPacchetti', document.getElementById('contatorePacchetti'));
+  contaElementi('/readBevande', document.getElementById('contatoreBevande'));
+  contaElementi('/readTaxi', document.getElementById('contatoreTaxi'));
   contaElementi('/readFeedback', document.getElementById('contatoreFeedback'));
 
   document.getElementById('logout').addEventListener('click', function () {

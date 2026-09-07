@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modifica bevanda - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+<style>
+  /* Stili locali alla pagina: le caselle di spunta non sono previste da style.css */
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem 0;
+  }
+
+  .check-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--color-brass);
+    border: none;
+    padding: 0;
+  }
+
+  .check-row label {
+    font-size: 0.85rem;
+    letter-spacing: 0;
+    text-transform: none;
+    font-weight: 400;
+    color: var(--color-ivory);
+  }
+</style>
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/dipendente/bevande}">&larr; Torna alle bevande</a>
+</header>
+
+<main class="manage-shell" style="max-width:560px;">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow">Area Dipendente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">Modifica bevanda</h1>
+      <p class="dashboard-header__welcome" id="messaggioCodice"></p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel__header">
+      <h2 class="panel__title">Dati della bevanda</h2>
+    </div>
+    <hr class="divider-brass">
+
+    <div id="esito" class="esito" hidden></div>
+
+    <form id="formBevanda" onsubmit="gestisciModifica(event)">
+      <div class="field">
+        <label for="nome">Nome</label>
+        <input type="text" id="nome" name="nome" maxlength="255" placeholder="Es. Champagne" required>
+        <span class="hint">Puoi cambiarlo: il nome originale viene inviato a parte.</span>
+      </div>
+      <div class="field">
+        <label for="quantitaBase">Quantita' base</label>
+        <input type="number" id="quantitaBase" name="quantitaBase" min="0" placeholder="Es. 1" required>
+      </div>
+      <div class="field">
+        <label for="prezzoBase">Prezzo base</label>
+        <input type="number" id="prezzoBase" name="prezzoBase" min="0" step="0.01" placeholder="Es. 45.00" required>
+        <span class="hint">Non puo' essere negativo.</span>
+      </div>
+
+      <div class="check-row">
+        <input type="checkbox" id="alcolico" name="alcolico">
+        <label for="alcolico">Alcolico</label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Salva modifiche</button>
+        <p class="link-row"><a th:href="@{/hotel/dipendente/bevande}">&larr; Torna all'elenco delle bevande</a></p>
+      </div>
+    </form>
+  </section>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script>
+  const ENDPOINT_DIPENDENTE = API_BASE + '/homepage/dipendente';
+  const CHIAVE_SESSIONE = 'bevandaDaModificare';
+
+  const MESSAGGIO_ACCESSO_NEGATO = 'ACCESSO NEGATO: effettua di nuovo l\'accesso.';
+
+  /*
+   * Verifica dell'accesso prima delle operazioni protette: /check deve
+   * restituire un dipendente. Resta fuori il recupero dei dati della bevanda.
+   */
+  async function accessoConsentito() {
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/check', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + (recuperaToken() || '') }
+      });
+
+      if (!response.ok) return false;
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      return corpo !== null && typeof corpo === 'object' && corpo.id != null;
+    } catch (errore) {
+      return false;
+    }
+  }
+
+  const form = document.getElementById('formBevanda');
+  const esito = document.getElementById('esito');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const messaggioCodice = document.getElementById('messaggioCodice');
+
+  // Nome con cui la bevanda e' registrata adesso: viaggia come parametro della
+  // PUT, cosi' il service sa quale riga aggiornare anche se il nome cambia.
+  const codiceVecchio = new URLSearchParams(window.location.search).get('codice') || '';
+
+  messaggioCodice.textContent = codiceVecchio ? ('Bevanda selezionata: ' + codiceVecchio) : 'Nessuna bevanda selezionata.';
+
+  function riempiForm(bevanda) {
+    document.getElementById('nome').value = bevanda.nome || '';
+    document.getElementById('quantitaBase').value = bevanda.quantitaBase != null ? bevanda.quantitaBase : '';
+    document.getElementById('prezzoBase').value = bevanda.prezzoBase != null ? bevanda.prezzoBase : '';
+    document.getElementById('alcolico').checked = bevanda.alcolico === true;
+  }
+
+  /*
+   * La dto arriva dalla pagina di elenco tramite sessionStorage. Se la pagina
+   * viene ricaricata quel dato non c'e' piu': in quel caso si richiama
+   * direttamente /goToUpdateBevanda con il nome preso dalla query string.
+   */
+  async function caricaBevanda() {
+    nascondiEsito(esito);
+
+    const salvata = sessionStorage.getItem(CHIAVE_SESSIONE);
+
+    if (salvata) {
+      sessionStorage.removeItem(CHIAVE_SESSIONE);
+      riempiForm(JSON.parse(salvata));
+      return;
+    }
+
+    if (!codiceVecchio) {
+      mostraEsito(esito, 'Nessuna bevanda selezionata: torna all\'elenco e premi Modifica.', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/goToUpdateBevanda/' + encodeURIComponent(codiceVecchio), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok && corpo) {
+        riempiForm(corpo);
+      } else {
+        mostraEsito(esito, corpo || 'Bevanda non trovata.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    }
+  }
+
+  async function gestisciModifica(event) {
+    event.preventDefault();
+    nascondiEsito(esito);
+
+    if (!codiceVecchio) {
+      mostraEsito(esito, 'Nessuna bevanda selezionata: torna all\'elenco e premi Modifica.', 'error');
+      return;
+    }
+
+    if (!(await accessoConsentito())) {
+      mostraEsito(esito, MESSAGGIO_ACCESSO_NEGATO, 'error');
+      return;
+    }
+
+    const corpoRichiesta = {
+      nome: document.getElementById('nome').value.trim(),
+      quantitaBase: document.getElementById('quantitaBase').value,
+      prezzoBase: document.getElementById('prezzoBase').value,
+      alcolico: document.getElementById('alcolico').checked
+    };
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Salvataggio in corso...';
+
+    try {
+      const response = await fetch(ENDPOINT_DIPENDENTE + '/modifyBevanda?codiceBevanda=' + encodeURIComponent(codiceVecchio), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpoRichiesta)
+      });
+
+      const corpo = await leggiCorpoRisposta(response);
+
+      if (response.ok) {
+        mostraEsito(esito, corpo || 'Bevanda modificata con successo.', 'success');
+      } else {
+        // In caso di errori di validazione il backend restituisce un array di messaggi.
+        mostraEsito(esito, corpo || 'Errore durante la modifica della bevanda.', 'error');
+      }
+    } catch (errore) {
+      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Salva modifiche';
+    }
+  };
+
+  caricaBevanda();
+</script>
+
+</body>
+</html>

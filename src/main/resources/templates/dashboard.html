@@ -145,12 +145,11 @@
     <span class="card__eyebrow">Benvenuto</span>
     <h1 class="dashboard-hero__title">Il tuo soggiorno<br>comincia da qui</h1>
     <p class="dashboard-hero__lead">
-      Accedi al gestionale per prenotare una stanza e i servizi dell'hotel,
-      oppure dai un'occhiata come ospite senza registrarti.
+      Accedi al tuo account per prenotare una stanza o lasciare un feedback, oppure registrati se e' la tua prima visita.
     </p>
 
     <div class="dashboard-hero__actions">
-      <button type="button" class="btn btn-primary" id="btnLogin">Login</button>
+      <button type="button" class="btn btn-primary" id="btnLogin">Accedi</button>
       <button type="button" class="btn btn-secondary" id="btnOspite">Entra come ospite</button>
     </div>
 
@@ -162,7 +161,7 @@
 
 <script th:src="@{/js/common.js}"></script>
 <script>
-  const PAGINA_LOGIN = API_BASE + '/choose-register-login';
+  const PAGINA_LOGIN = API_BASE + '/login-cliente';
   const PAGINA_OSPITE = API_BASE + '/homepage/cliente/';
 
   const esito = document.getElementById('esito');
