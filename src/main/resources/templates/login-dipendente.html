@@ -38,6 +38,11 @@
           <input type="password" id="password" name="password" placeholder="La tua password" required>
         </div>
 
+        <div class="field">
+          <label for="codiceDipendente">Codice dipendente</label>
+          <input type="text" id="codiceDipendente" name="codiceDipendente" placeholder="La tua matricola" required>
+        </div>
+
         <div class="form-actions">
           <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Accedi</button>
           <button type="button" class="btn btn-secondary btn-block" id="btnOspite">Entra come ospite</button>
@@ -62,8 +67,13 @@
 
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
+    const codiceDipendente = document.getElementById('codiceDipendente').value.trim();
 
-    const params = new URLSearchParams({ username: username, password: password });
+    const params = new URLSearchParams({
+      username: username,
+      password: password,
+      codiceDipendente: codiceDipendente
+    });
 
     btnSubmit.disabled = true;
     btnSubmit.textContent = 'Accesso in corso...';

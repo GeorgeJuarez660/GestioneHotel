@@ -35,6 +35,9 @@ public class Dipendente {
     @Column(nullable = false) 
     private String lingua;
 
+    @Column(nullable = false) 
+    private String codDipendente;
+
     @ManyToOne(optional = false) 
     @JoinColumn(name = "cat_id")
     private CategoriaDipendente categoria;
@@ -48,6 +51,7 @@ public class Dipendente {
     public String getUsername() { return username; } public void setUsername(String username) { this.username = username; }
     public String getPassword() { return password; } public void setPassword(String password) { this.password = password; }
     public String getLingua() { return lingua; } public void setLingua(String lingua) { this.lingua = lingua; }
+    public String getCodDipendente() { return codDipendente; } public void setCodDipendente(String codDipendente) { this.codDipendente = codDipendente; }
     public CategoriaDipendente getCategoria() { return categoria; }
     public void setCategoria(CategoriaDipendente categoria) { this.categoria = categoria; }
 }

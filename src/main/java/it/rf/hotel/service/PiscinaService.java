@@ -47,11 +47,6 @@ public class PiscinaService
                 piscina.setOperatoreInterno(operatoreInterno);
             }
 
-            /*if (dto.getOperatoreEsternoId() != null) {
-                OperatoreEsterno operatoreEsterno = entityManager.getReference(OperatoreEsterno.class, dto.getOperatoreEsternoId());
-                navetta.setOperatoreEsterno(operatoreEsterno);
-            }*/
-
             piscinaRepository.save(piscina);
 
         }
@@ -75,10 +70,6 @@ public class PiscinaService
                 dto.setNomeOperatoreInterno(piscina.getOperatoreInterno().getNome());
                 dto.setCognomeOperatoreInterno(piscina.getOperatoreInterno().getCognome());
             }
-
-            /*if (navetta.getOperatoreEsterno() != null) {
-                dto.setOperatoreEsternoId(navetta.getOperatoreEsterno().getId());
-            }*/
 
             elenco.add(dto);
         }
@@ -121,11 +112,6 @@ public class PiscinaService
                 Dipendente operatoreInterno = dipendenteRepository.findByCodiceFiscale(dto.getCfOperatoreInterno()).orElse(null);
                 piscina.setOperatoreInterno(operatoreInterno);
             }
-
-            /*if (dto.getOperatoreEsternoId() != null) {
-                OperatoreEsterno operatoreEsterno = entityManager.getReference(OperatoreEsterno.class, dto.getOperatoreEsternoId());
-                navetta.setOperatoreEsterno(operatoreEsterno);
-            }*/
 
             piscinaRepository.save(piscina);
         }

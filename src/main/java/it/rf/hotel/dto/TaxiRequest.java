@@ -30,8 +30,6 @@ public class TaxiRequest {
     @Size(max = 255, message = "Luogo di destinazione troppo lungo")
     private String luogoDestinazione;
 
-    @NotNull(message = "Prezzo obbligatorio")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Prezzo non valido")
     private BigDecimal prezzo;
 
     @NotNull(message = "Numero persone obbligatorio")

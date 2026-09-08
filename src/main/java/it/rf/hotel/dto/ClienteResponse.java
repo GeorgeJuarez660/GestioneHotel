@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class ClienteReqRes {
+public class ClienteResponse {
 
     @NotBlank(message = "Username obbligatorio")
     @Size(max = 50, message = "Username troppo lungo")
@@ -19,7 +19,7 @@ public class ClienteReqRes {
     private String codiceFiscale;
 
 
-    public ClienteReqRes() {
+    public ClienteResponse() {
     }
 
     public String getUsername() {

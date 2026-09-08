@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
-public class RegisterClienteRequest {
+public class ClienteRequest {
 
     @NotBlank(message = "Nome obbligatorio")
     @Size(max = 100)
@@ -25,6 +25,10 @@ public class RegisterClienteRequest {
     @Past(message = "Data di nascita non valida")
     private LocalDate dataNascita;
 
+    @NotBlank(message = "Lingua obbligatoria")
+    @Size(min = 2, max = 2, message = "Lingua non valida")
+    private String lingua;
+
     @NotBlank(message = "Username obbligatorio")
     @Size(min = 3, max = 50)
     private String username;
@@ -33,7 +37,7 @@ public class RegisterClienteRequest {
     @Size(min = 8, max = 100)
     private String password;
 
-    public RegisterClienteRequest() {
+    public ClienteRequest() {
     }
 
     public String getNome() { return nome; }
@@ -44,6 +48,8 @@ public class RegisterClienteRequest {
     public void setCodiceFiscale(String codiceFiscale) { this.codiceFiscale = codiceFiscale; }
     public LocalDate getDataNascita() { return dataNascita; }
     public void setDataNascita(LocalDate dataNascita) { this.dataNascita = dataNascita; }
+    public String getLingua() { return lingua; }
+    public void setLingua(String lingua) { this.lingua = lingua; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public String getPassword() { return password; }

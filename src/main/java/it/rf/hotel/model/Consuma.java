@@ -18,12 +18,6 @@ public class Consuma {
     @Column
     private Long consuma_id;
 
-    @Column(nullable = true)
-    private LocalDate dataConsumata;
-
-    @Column(nullable = true)
-    private LocalTime oraConsumata;
-
     @Column(nullable = false)
     private Integer quantitaOrdinata;
 
@@ -40,22 +34,6 @@ public class Consuma {
 
     public Long getId() {
         return consuma_id;
-    }
-
-    public LocalDate getDataConsumata() {
-        return dataConsumata;
-    }
-
-    public void setDataConsumata(LocalDate dataConsumata) {
-        this.dataConsumata = dataConsumata;
-    }
-
-    public LocalTime getOraConsumata() {
-        return oraConsumata;
-    }
-
-    public void setOraConsumata(LocalTime oraConsumata) {
-        this.oraConsumata = oraConsumata;
     }
 
     public Integer getQuantitaOrdinata() {

@@ -19,7 +19,7 @@ public interface TaxiRepository extends JpaRepository<Taxi, Long> {
        il risultato e' una lista e non un Optional. */
     public List<Taxi> findByGestiscePrenotazioneCodice(String codice);
 
-    @NativeQuery(value = "SELECT * from taxi t, gestisce g, prenotazioni p, clienti c where t.gestisce_id=g.gestisce_id and g.prenotazione_id=p.prenotazione_id and p.cliente_id=c.cliente_id " + 
+    @NativeQuery(value = "SELECT t.* from taxi t, gestisce g, prenotazioni p, clienti c where t.gestisce_id=g.gestisce_id and g.prenotazione_id=p.prenotazione_id and p.cliente_id=c.cliente_id " + 
                 " and c.nome = ?1 and c.cognome = ?2")
     public Optional<List<Taxi>> findByNomeAndCognome(String nome, String cognome);
 

@@ -59,6 +59,11 @@
           <input type="text" id="lingua" name="lingua" maxlength="50" placeholder="Es. Italiano" required>
         </div>
         <div class="field">
+          <label for="codDipendente">Codice dipendente</label>
+          <input type="text" id="codDipendente" name="codDipendente" minlength="8" maxlength="100" placeholder="Da 8 a 100 caratteri" required>
+          <span class="hint">Matricola assegnata dall'hotel: almeno 8 caratteri.</span>
+        </div>
+        <div class="field">
           <label for="categoria">Categoria dipendente</label>
           <select id="categoriaTipo" name="categoriaTipo" required>
             <option value="RECEPTIONIST">RECEPTIONIST</option>
@@ -94,6 +99,7 @@
       username: document.getElementById('username').value.trim(),
       password: document.getElementById('password').value,
       lingua: document.getElementById('lingua').value.trim(),
+      codDipendente: document.getElementById('codDipendente').value.trim(),
       categoria: document.getElementById('categoriaTipo').value.trim()
     };
 

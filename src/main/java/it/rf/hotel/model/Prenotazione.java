@@ -48,6 +48,10 @@ public class Prenotazione {
     @JoinColumn(name = "dipendente_id")
     private Dipendente receptionist;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "operatore_esterno_id")
+    private OperatoreEsterno receptionistEsterno;
+
     public Long getId() {
         return prenotazione_id;
     }
@@ -136,6 +140,12 @@ public class Prenotazione {
         this.receptionist = receptionist;
     }
 
-    
+    public OperatoreEsterno getReceptionistEsterno() {
+        return receptionistEsterno;
+    }
+
+    public void setReceptionistEsterno(OperatoreEsterno receptionistEsterno) {
+        this.receptionistEsterno = receptionistEsterno;
+    }
 }
 

@@ -5,9 +5,11 @@ import it.rf.hotel.exception.CodiceDuplicatoException;
 import it.rf.hotel.exception.NavettaReferencedException;
 import it.rf.hotel.model.Dipendente;
 import it.rf.hotel.model.Navetta;
+import it.rf.hotel.model.OperatoreEsterno;
 import it.rf.hotel.repository.ComprendeRepository;
 import it.rf.hotel.repository.DipendenteRepository;
 import it.rf.hotel.repository.NavettaRepository;
+import it.rf.hotel.repository.OperatoreEsternoRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,9 @@ public class NavettaService {
 
     @Autowired
     private DipendenteRepository dipendenteRepository;
+
+    @Autowired
+    private OperatoreEsternoRepository operatoreEsternoRepository;
 
 
     public String creaNavetta(NavettaDto dto) throws CodiceDuplicatoException {
@@ -137,10 +142,10 @@ public class NavettaService {
                 navetta.setOperatoreInterno(operatoreInterno);
             }
 
-            /*if (dto.getOperatoreEsternoId() != null) {
-                OperatoreEsterno operatoreEsterno = entityManager.getReference(OperatoreEsterno.class, dto.getOperatoreEsternoId());
+            if (dto.getCfOperatoreEsterno() != null) {
+                OperatoreEsterno operatoreEsterno = operatoreEsternoRepository.findByCodiceFiscale(dto.getCfOperatoreEsterno()).orElse(null);
                 navetta.setOperatoreEsterno(operatoreEsterno);
-            }*/
+            }
 
             navettaRepository.save(navetta);
         }

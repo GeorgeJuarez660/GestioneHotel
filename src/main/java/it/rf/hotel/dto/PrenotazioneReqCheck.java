@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 public class PrenotazioneReqCheck {
 
@@ -47,6 +48,8 @@ public class PrenotazioneReqCheck {
     @Size(max = 16, message = "Codice stato pagamento non valido")
     private String statoPagamento;
 
+    private List<ConsumaRequest> consumazioni;
+
     public PrenotazioneReqCheck() {
     }
 
@@ -85,5 +88,8 @@ public class PrenotazioneReqCheck {
 
     public Integer getNumPersone() { return numPersone; }
     public void setNumPersone(Integer numPersone) { this.numPersone = numPersone; }
+
+    public List<ConsumaRequest> getConsumazioni() { return consumazioni; }
+    public void setConsumazioni(List<ConsumaRequest> consumazioni) { this.consumazioni = consumazioni; }
 
 }

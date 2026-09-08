@@ -39,7 +39,7 @@ public class TaxiService {
             taxi.setOra(dto.getOra());
             taxi.setLuogoPartenza(dto.getLuogoPartenza());
             taxi.setLuogoDestinazione(dto.getLuogoDestinazione());
-            taxi.setPrezzo(dto.getPrezzo());
+            taxi.setPrezzo(new BigDecimal(7));
             taxi.setNumPersone(dto.getNumPersone());
             taxi.setGestisce(gestisce);
             taxiRepository.save(taxi);

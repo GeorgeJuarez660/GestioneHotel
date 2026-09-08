@@ -47,6 +47,17 @@
           <input type="date" id="dataNascita" name="dataNascita" required>
         </div>
         <div class="field">
+          <label for="lingua">Lingua parlata</label>
+          <select id="lingua" name="lingua" required>
+            <option value="it">Italiano</option>
+            <option value="en">Inglese</option>
+            <option value="fr">Francese</option>
+            <option value="de">Tedesco</option>
+            <option value="es">Spagnolo</option>
+          </select>
+          <span class="hint">Codice a due lettere della lingua preferita.</span>
+        </div>
+        <div class="field">
           <label for="username">Username</label>
           <input type="text" id="username" name="username" minlength="3" maxlength="50" placeholder="Da 3 a 50 caratteri" required>
         </div>
@@ -79,6 +90,7 @@
       cognome: document.getElementById('cognome').value.trim(),
       codiceFiscale: document.getElementById('codiceFiscale').value.trim(),
       dataNascita: document.getElementById('dataNascita').value,
+      lingua: document.getElementById('lingua').value.trim(),
       username: document.getElementById('username').value.trim(),
       password: document.getElementById('password').value
     };

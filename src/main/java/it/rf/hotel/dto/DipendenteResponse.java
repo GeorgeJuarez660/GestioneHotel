@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public class DipendenteReqRes {
+public class DipendenteResponse {
 
     @NotBlank(message = "Username obbligatorio")
     @Size(max = 50, message = "Username troppo lungo")
@@ -24,7 +24,7 @@ public class DipendenteReqRes {
     @Positive(message = "Codice dipendente non valido")
     private Long codiceDipendente;
 
-    public DipendenteReqRes() {
+    public DipendenteResponse() {
     }
 
     public String getUsername() {

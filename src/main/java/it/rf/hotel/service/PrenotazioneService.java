@@ -1,19 +1,24 @@
 package it.rf.hotel.service;
 
+import it.rf.hotel.dto.ConsumaRequest;
 import it.rf.hotel.dto.PrenotazioneReqCheck;
 import it.rf.hotel.dto.PrenotazioneResponse;
+import it.rf.hotel.exception.BevandaUnavailableException;
 import it.rf.hotel.exception.CodiceDuplicatoException;
 import it.rf.hotel.exception.NavettaNoSeatsException;
 import it.rf.hotel.exception.StanzaBookedException;
 import it.rf.hotel.exception.StanzaTooPeopleException;
 import it.rf.hotel.model.Accede;
+import it.rf.hotel.model.Bevanda;
 import it.rf.hotel.model.Cliente;
 import it.rf.hotel.model.Comprende;
+import it.rf.hotel.model.Consuma;
 import it.rf.hotel.model.Dipendente;
 import it.rf.hotel.model.Gestisce;
 import it.rf.hotel.model.Include;
 import it.rf.hotel.model.MetodoPagamento;
 import it.rf.hotel.model.Navetta;
+import it.rf.hotel.model.OperatoreEsterno;
 import it.rf.hotel.model.Guida;
 import it.rf.hotel.model.Piscina;
 import it.rf.hotel.model.Pacchetto;
@@ -23,14 +28,17 @@ import it.rf.hotel.model.Stanza;
 import it.rf.hotel.model.StatoPagamento;
 import it.rf.hotel.model.StatoPrenotazione;
 import it.rf.hotel.repository.AccedeRepository;
+import it.rf.hotel.repository.BevandaRepository;
 import it.rf.hotel.repository.ClienteRepository;
 import it.rf.hotel.repository.ComprendeRepository;
+import it.rf.hotel.repository.ConsumaRepository;
 import it.rf.hotel.repository.DipendenteRepository;
 import it.rf.hotel.repository.GestisceRepository;
 import it.rf.hotel.repository.GuidaRepository;
 import it.rf.hotel.repository.IncludeRepository;
 import it.rf.hotel.repository.MetodoPagamentoRepository;
 import it.rf.hotel.repository.NavettaRepository;
+import it.rf.hotel.repository.OperatoreEsternoRepository;
 import it.rf.hotel.repository.PacchettoRepository;
 import it.rf.hotel.repository.PagamentoRepository;
 import it.rf.hotel.repository.PiscinaRepository;
@@ -44,6 +52,7 @@ import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.lang.Arrays;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,10 +74,16 @@ public class PrenotazioneService {
     private DipendenteRepository dipendenteRepository;
 
     @Autowired
+    private OperatoreEsternoRepository operatoreEsternoRepository;
+
+    @Autowired
     private StanzaRepository stanzaRepository;
 
     @Autowired
     private PacchettoRepository pacchettoRepository;
+
+    @Autowired
+    private BevandaRepository bevandaRepository;
 
     @Autowired
     private NavettaRepository navettaRepository;
@@ -84,6 +99,9 @@ public class PrenotazioneService {
 
     @Autowired
     private ComprendeRepository comprendeRepository;
+
+    @Autowired
+    private ConsumaRepository consumaRepository;
 
     @Autowired
     private IncludeRepository includeRepository;
@@ -127,8 +145,14 @@ public class PrenotazioneService {
             StatoPrenotazione stato = statoPrenotazioneRepository.findByStato("IN_ATTESA").orElse(null);
             prenotazione.setStato(stato);
 
-            Dipendente receptionist = dipendenteRepository.findByCodiceFiscale("VRDLGU80A01H501W").orElse(null);
-            prenotazione.setReceptionist(receptionist);
+            if(cliente.getLingua().equals("IT")){
+                Dipendente receptionist = trovaReceptionist(cliente.getLingua());
+                prenotazione.setReceptionist(receptionist);
+            }
+            else{
+                OperatoreEsterno receptionistEsterno = trovaReceptionistEsterno(cliente.getLingua());
+                prenotazione.setReceptionistEsterno(receptionistEsterno);
+            }
 
             List<String> codStanze = Arrays.asList(dto.getCodiceStanza().trim().split(",")); //tolgo gli spazi e li spezzetto
 
@@ -262,6 +286,47 @@ public class PrenotazioneService {
         return "PRENOTAZIONE AGGIUNTA CON SUCCESSO";
     }
 
+
+    private Dipendente trovaReceptionist(String linguaCliente) {
+        
+        long numDipendenti = dipendenteRepository.countByLingua(linguaCliente);
+        Dipendente dipendente = null;
+        if(numDipendenti > 1){
+            String cfReceptionist = dipendenteRepository.findByLinguaAndPrenotazioni(linguaCliente);
+
+            dipendente = dipendenteRepository.findByCodiceFiscale(cfReceptionist).orElse(null);
+        }
+        else if(numDipendenti == 1){
+            dipendente = dipendenteRepository.findByLingua(linguaCliente).orElse(null);
+        }
+        else{
+            dipendente = null;
+        }
+
+        return dipendente;
+
+    }
+
+    private OperatoreEsterno trovaReceptionistEsterno(String linguaCliente) {
+        
+        long numDipendenti = operatoreEsternoRepository.countByLingua(linguaCliente);
+        OperatoreEsterno operatore = null;
+        if(numDipendenti > 1){
+            String cfReceptionist = operatoreEsternoRepository.findByLinguaAndPrenotazioni(linguaCliente);
+
+            operatore = operatoreEsternoRepository.findByCodiceFiscale(cfReceptionist).orElse(null);
+        }
+        else if(numDipendenti == 1){
+            operatore = operatoreEsternoRepository.findByLingua(linguaCliente).orElse(null);
+        }
+        else{
+            operatore = null;
+        }
+
+        return operatore;
+
+    }
+
     public List<PrenotazioneResponse> elencoPrenotazioni() {
 
         List<Prenotazione> prenotazioni = prenotazioneRepository.findAll();
@@ -366,22 +431,104 @@ public class PrenotazioneService {
             prenotazione.setStato(statoPrenotazione);
 
             prenotazioneRepository.save(prenotazione);
-            
-            Navetta navetta = navettaRepository.findByCodice(dto.getCodiceNavetta()).orElse(null);
-            navetta.setCodice(dto.getCodiceNavetta());
 
+            Navetta navetta = null;
+            if(dto.getCodiceNavetta() != null && !dto.getCodiceNavetta().isEmpty()){
+                navetta = navettaRepository.findByCodice(dto.getCodiceNavetta()).orElse(null);
+                navetta.setCodice(dto.getCodiceNavetta());
+            }
+
+            Guida guida = null;
+            if(dto.getCodiceGuida() != null && !dto.getCodiceGuida().isEmpty()){
+                guida = guidaRepository.findByCodice(dto.getCodiceGuida()).orElse(null);
+                guida.setCodice(dto.getCodiceGuida());
+            }
+
+            Piscina piscina = null;
+            if(dto.getCodicePiscina() != null && !dto.getCodicePiscina().isEmpty()){
+                piscina = piscinaRepository.findByCodice(dto.getCodicePiscina()).orElse(null);
+                piscina.setCodice(dto.getCodicePiscina());
+            }
+        
             Gestisce gestisce = gestisceRepository.findByPrenotazioneCodice(codice).orElse(null);
             gestisce.setDataCheckIn(dto.getDataCheckIn());
             gestisce.setDataCheckOut(dto.getDataCheckOut());
             gestisce.setNumeroPersone(dto.getNumPersone());
             
             gestisceRepository.save(gestisce);
-            
-            Comprende comprende = comprendeRepository.findByPrenotazioneCodice(codice).orElse(null);
-            comprende.setPrenotazione(prenotazione);
-            comprende.setNavetta(navetta);
 
-            comprendeRepository.save(comprende);
+            //Aggiorno le consumazioni e il prezzo effettivo della prenotazione
+
+            BigDecimal totaleConsumazioni = BigDecimal.ZERO;
+
+            if(dto.getConsumazioni() != null && !dto.getConsumazioni().isEmpty()){
+                for(ConsumaRequest consumaReq : dto.getConsumazioni()){
+
+                    Consuma consumaEsistente = consumaRepository.findByGestiscePrenotazioneCodiceAndBevandaNome(codice, consumaReq.getNomeBevanda());
+
+                    if(consumaEsistente != null){
+                        totaleConsumazioni = totaleConsumazioni.add(consumaEsistente.getPrezzoEffettivo());
+                    }
+                    else{
+                        Bevanda bevanda = bevandaRepository.findByNome(consumaReq.getNomeBevanda()).orElse(null);
+                        Integer quantitaOrdinata = consumaReq.getQuantitaOrdinata() != null ? consumaReq.getQuantitaOrdinata() : 0;
+
+                        Consuma consuma = new Consuma();
+                        consuma.setGestisce(gestisce);
+                        consuma.setBevanda(bevanda);
+                        consuma.setQuantitaOrdinata(quantitaOrdinata);
+                        consuma.setPrezzoEffettivo(bevanda.getPrezzoBase().multiply(new BigDecimal(quantitaOrdinata)));
+
+                        consumaRepository.save(consuma);
+
+                        // La giacenza scala solo per le consumazioni appena registrate.
+                        bevanda.setQuantitaBase(bevanda.getQuantitaBase() - quantitaOrdinata);
+                        bevandaRepository.save(bevanda);
+
+                        totaleConsumazioni = totaleConsumazioni.add(consuma.getPrezzoEffettivo());
+                    }
+
+                    
+                }
+            }
+            //Riaggiorno la prenotazione con il nuovo prezzo effettivo;
+            prenotazione.setPrezzoEffettivo(totaleConsumazioni.add(dto.getPrezzoTotale()));
+
+            if(dto.getCodiceNavetta() != null){
+                if(navetta != null) {
+                    Comprende comprende = comprendeRepository.findByPrenotazioneCodice(codice).orElse(null);
+                    comprende.setPrenotazione(prenotazione);
+                    comprende.setNavetta(navetta);
+                    comprendeRepository.save(comprende);
+                }
+                else{
+                    comprendeRepository.deleteByPrenotazioneCodice(codice);
+                }
+            }
+
+            if(dto.getCodiceGuida() != null){
+                if(guida != null) {
+                    Include include = includeRepository.findByPrenotazioneCodice(codice).orElse(null);
+                    include.setPrenotazione(prenotazione);
+                    include.setGuida(guida);
+                    includeRepository.save(include);
+                }
+                else{
+                    includeRepository.deleteByPrenotazioneCodice(codice);
+                }
+            }
+
+            if(dto.getCodicePiscina() != null){
+                if(piscina != null) {
+                    Accede accede = accedeRepository.findByPrenotazioneCodice(codice).orElse(null);
+                    accede.setPrenotazione(prenotazione);
+                    accede.setPiscina(piscina);
+                    accedeRepository.save(accede);
+                }
+                else{
+                    accedeRepository.deleteByPrenotazioneCodice(codice);
+                }
+            }
 
             StatoPagamento statoPagamento = statoPagamentoRepository.findByStato(dto.getStatoPagamento()).orElse(null);
 

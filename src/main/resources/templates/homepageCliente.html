@@ -62,20 +62,6 @@
     <section class="action-card">
       <div class="action-card__icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 17v-4l2-5h14l2 5v4"></path>
-          <path d="M3 17v2 M21 17v2 M9 3h6v3"></path>
-          <circle cx="7.5" cy="16.5" r="1.5"></circle>
-          <circle cx="16.5" cy="16.5" r="1.5"></circle>
-        </svg>
-      </div>
-      <h2 class="action-card__title">Servizio taxi</h2>
-      <p class="action-card__desc">Prenota una corsa in taxi e consulta quelle gia' addebitate sul tuo soggiorno.</p>
-      <button type="button" class="btn btn-primary" id="btnTaxi">Vai al servizio taxi</button>
-    </section>
-
-    <section class="action-card">
-      <div class="action-card__icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"></path>
           <path d="M7 9h10 M7 13h6"></path>
         </svg>
@@ -156,10 +142,6 @@
 
   document.getElementById('btnFeedback').addEventListener('click', function () {
     chiamaEndpointProtetto('/hotel/cliente/feedback');
-  });
-
-  document.getElementById('btnTaxi').addEventListener('click', function () {
-    chiamaEndpointProtetto('/hotel/cliente/taxi');
   });
 
   document.getElementById('btnMieiFeedback').addEventListener('click', function () {

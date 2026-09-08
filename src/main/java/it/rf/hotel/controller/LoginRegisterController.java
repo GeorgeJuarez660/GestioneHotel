@@ -1,14 +1,15 @@
 package it.rf.hotel.controller;
 
 import it.rf.hotel.config.JWTConfig;
-import it.rf.hotel.dto.RegisterClienteRequest;
-import it.rf.hotel.dto.RegisterDipendenteRequest;
+import it.rf.hotel.dto.ClienteRequest;
+import it.rf.hotel.dto.DipendenteRequest;
 import it.rf.hotel.exception.CFDuplicatoException;
 import it.rf.hotel.exception.NotClienteFoundExpcetion;
 import it.rf.hotel.exception.NotDipendenteFoundException;
 import it.rf.hotel.exception.UnderageUtenteException;
 import it.rf.hotel.model.Cliente;
 import it.rf.hotel.model.Dipendente;
+import it.rf.hotel.model.OperatoreEsterno;
 import it.rf.hotel.service.LoginRegisterService;
 import jakarta.validation.Valid;
 
@@ -35,7 +36,7 @@ public class LoginRegisterController {
     private JWTConfig jwtService;
 
     @PostMapping("/register/cliente")
-    public ResponseEntity<String> registerCliente(@Valid @RequestBody RegisterClienteRequest dto) {
+    public ResponseEntity<String> registerCliente(@Valid @RequestBody ClienteRequest dto) {
         try {
             String esito = loginRegisterService.registraCliente(dto);
 
@@ -54,7 +55,7 @@ public class LoginRegisterController {
     }
 
     @PostMapping("/register/dipendente")
-    public ResponseEntity<String> registerDipendente(@Valid @RequestBody RegisterDipendenteRequest dto) {
+    public ResponseEntity<String> registerDipendente(@Valid @RequestBody DipendenteRequest dto) {
         try {
             String esito = loginRegisterService.registraDipendente(dto);
 
@@ -91,16 +92,24 @@ public class LoginRegisterController {
     }
 
     @GetMapping("/login/dipendente")
-    public ResponseEntity<?> loginDipendente(@RequestParam String username, @RequestParam String password) {
+    public ResponseEntity<?> loginDipendente(@RequestParam String username, @RequestParam String password, @RequestParam String codDipendente) {
         try {
-            Dipendente dipendente = loginRegisterService.loginDipendente(username, password); 
-            
-            String token = jwtService.generateTokenFromDipendente(dipendente);
-            
+            String token = null;
+            if(codDipendente != null){
+                if(codDipendente.startsWith("EXT")){
+                    OperatoreEsterno operatoreEsterno = loginRegisterService.loginDipendenteEsterno(username, password, codDipendente);
+                    token = jwtService.generateTokenFromDipendente(operatoreEsterno);
+                }
+                else{
+                    Dipendente dipendente = loginRegisterService.loginDipendente(username, password, codDipendente);
+                    token = jwtService.generateTokenFromDipendente(dipendente);
+                }
+            }
+
             return ResponseEntity.ok(token); 
 
         } catch (NotDipendenteFoundException exception) {
-            System.out.println("Prova a inserire un altro username e password");
+            System.out.println("Prova a inserire un altro username, password e codice dipendente");
 			
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("NON E' STATO TROVATO IL DIPENDENTE ");
         } catch (Exception exception) {

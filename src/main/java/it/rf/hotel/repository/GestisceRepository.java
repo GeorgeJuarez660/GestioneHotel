@@ -25,7 +25,7 @@ public interface GestisceRepository extends JpaRepository<Gestisce, Long> {
 
     public Optional<Gestisce> findByPrenotazioneCodice(String codice);
 
-    @NativeQuery (value = "SELECT * from gestisce g, prenotazioni p, clienti c where g.prenotazione_id=p.prenotazione_id and p.cliente_id=c.cliente_id " + 
+    @NativeQuery(value = "SELECT g.* from gestisce g, prenotazioni p, clienti c where g.prenotazione_id=p.prenotazione_id and p.cliente_id=c.cliente_id " + 
                 " and c.nome = ?1 and c.cognome = ?2 and data_check_in is not null and data_check_out is null order by data_check_in desc ")
     public Optional<Gestisce> findByNomeAndCognome(String nome, String cognome);
 
