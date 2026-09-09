@@ -95,6 +95,11 @@ public class SwitchPagesController {
         return "showFeedbackCliente";
     }
 
+    @GetMapping("/cliente/mie-prenotazioni")
+    public String prenotazioniCliente() {
+        return "prenotazioneByCliente";
+    }
+
     @GetMapping("/dipendente/feedback")
     public String feedbackDipendente() {
         return "showFeedbackDipendente";

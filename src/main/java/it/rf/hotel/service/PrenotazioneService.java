@@ -367,6 +367,40 @@ public class PrenotazioneService {
         return elenco;
     }
 
+    public List<PrenotazioneResponse> elencoPrenotazioniByCliente(String cfCliente) {
+
+        List<Prenotazione> prenotazioni = prenotazioneRepository.findByClienteCodiceFiscale(cfCliente);
+        List<PrenotazioneResponse> elenco = new ArrayList<>();
+
+        for(Prenotazione prenotazione : prenotazioni){
+            PrenotazioneResponse dto = new PrenotazioneResponse();
+            dto.setCodice(prenotazione.getCodice());
+            dto.setDataPrenotazione(prenotazione.getDataPrenotazione());
+            dto.setPrezzoTotale(prenotazione.getPrezzoTotale());
+            dto.setPrezzoEffettivo(prenotazione.getPrezzoEffettivo());
+            dto.setDataInizio(prenotazione.getDataInizio());
+            dto.setDataFine(prenotazione.getDataFine());
+            dto.setStatoPrenotazione(prenotazione.getStato().getStato());
+            dto.setNote(prenotazione.getNote());
+
+            if (prenotazione.getCliente() != null) {
+                dto.setCfCliente(prenotazione.getCliente().getCodiceFiscale());
+                dto.setNomeCliente(prenotazione.getCliente().getNome());
+                dto.setCognomeCliente(prenotazione.getCliente().getCognome());
+            }
+
+            if (prenotazione.getReceptionist() != null) {
+                dto.setCfReceptionist(prenotazione.getReceptionist().getCodiceFiscale());
+                dto.setNomeReceptionist(prenotazione.getReceptionist().getNome());
+                dto.setCognomeReceptionist(prenotazione.getReceptionist().getCognome());
+            }
+
+            elenco.add(dto);
+        }
+
+        return elenco;
+    }
+
     public PrenotazioneReqCheck trovaPrenotazionePerConfermare(String codicePrenotazione) {
 
         Optional<Prenotazione> prenotazioneOpt = prenotazioneRepository.findByCodice(codicePrenotazione);

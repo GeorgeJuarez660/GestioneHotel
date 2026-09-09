@@ -65,6 +65,10 @@ document.getElementById('btnFeedback').addEventListener('click', function () {
   chiamaEndpointProtetto('/hotel/cliente/feedback');
 });
 
+document.getElementById('btnMiePrenotazioni').addEventListener('click', function () {
+  chiamaEndpointProtetto('/hotel/cliente/mie-prenotazioni');
+});
+
 document.getElementById('btnMieiFeedback').addEventListener('click', function () {
   chiamaEndpointProtetto('/hotel/cliente/miei-feedback');
 });

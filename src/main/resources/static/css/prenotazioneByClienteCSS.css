@@ -1,0 +1,45 @@
+/*
+ * Stili della pagina prenotazioneByCliente.html.
+ * Estratti dal template: il file HTML resta solo struttura.
+ */
+
+/*
+ * Stili locali alla pagina: qui le colonne sono dieci, contro le sette/otto
+ * delle altre schermate, quindi il contenitore standard da 1080px non basta
+ * e la tabella finisce sotto scorrimento orizzontale.
+ */
+.manage-shell {
+  max-width: min(1600px, 96vw);
+}
+
+/* I valori brevi restano su una riga sola: e' il testo spezzato a far
+   crescere l'altezza delle righe senza guadagnare spazio. */
+.data-table td {
+  white-space: nowrap;
+}
+
+/* Le intestazioni invece possono andare a capo: "Prezzo tot. effettivo" e
+   simili sono piu' larghe del dato che contengono e da sole basterebbero a
+   far ricomparire lo scorrimento orizzontale. */
+.data-table th {
+  white-space: normal;
+}
+
+/* Le note erano l'unica colonna davvero lunga ed erano loro a mandare la
+   tabella in scorrimento orizzontale: ora stanno in una riga sotto, larga
+   quanto tutta la tabella, dove il testo puo' andare a capo liberamente. */
+.data-table tr.riga-note td {
+  white-space: normal;
+  border-top: none;
+  padding-top: 0;
+  font-size: 0.82rem;
+  color: var(--color-ivory-dim);
+}
+
+.riga-note__etichetta {
+  color: var(--color-brass);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-right: 0.5rem;
+}

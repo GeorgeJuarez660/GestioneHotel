@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.jsonwebtoken.Claims;
@@ -27,7 +26,6 @@ import it.rf.hotel.model.Cliente;
 import it.rf.hotel.service.ClienteService;
 import it.rf.hotel.service.FeedbackService;
 import it.rf.hotel.service.PrenotazioneService;
-import it.rf.hotel.service.TaxiService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -45,9 +43,6 @@ public class ClienteSideController {
 
     @Autowired
     private FeedbackService feedbackService;
-
-    @Autowired
-    private TaxiService taxiService;
 
     @GetMapping("/check")
     public ResponseEntity<?> check(@RequestHeader("Authorization") String authHeader) {
@@ -148,7 +143,7 @@ public class ClienteSideController {
     }
 
     @GetMapping("/readFeedback/{clienteCF}")
-    public ResponseEntity<?> addFeedback(@PathVariable String clienteCF) {
+    public ResponseEntity<?> readFeedbacks(@PathVariable String clienteCF) {
         try {
 
             List<FeedbackDto> esito = feedbackService.elencoFeedbackInBaseAlCliente(clienteCF);
@@ -156,6 +151,18 @@ public class ClienteSideController {
         }
         catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE LETTURA FEEDBACK");
+        }
+    }
+
+    @GetMapping("/readPrenotazioni/{clienteCF}")
+    public ResponseEntity<?> readPrenotazioni(@PathVariable String clienteCF) {
+        try {
+
+            List<PrenotazioneResponse> esito = prenotazioneService.elencoPrenotazioniByCliente(clienteCF);
+            return ResponseEntity.ok(esito);
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE LETTURA PRENOTAZIONI");
         }
     }
 
