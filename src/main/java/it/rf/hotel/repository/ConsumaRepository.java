@@ -22,4 +22,7 @@ public interface ConsumaRepository extends JpaRepository<Consuma, Long> {
       una transazione in sola lettura — la delete viene semplicemente ignorata. */
     @Transactional
     public void deleteByGestiscePrenotazioneCodiceAndBevandaNome(String codice, String nomeBevanda);
+
+    @Transactional
+    public void deleteByGestiscePrenotazioneCodice(String codice);
 }

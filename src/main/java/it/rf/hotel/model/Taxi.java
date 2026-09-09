@@ -36,6 +36,9 @@ public class Taxi {
     @Column(nullable = false)
     private Integer numPersone;
 
+    @Column(nullable = false)
+    private Boolean addebitato;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "gestisce_id")
     private Gestisce gestisce;
@@ -102,5 +105,13 @@ public class Taxi {
 
     public void setGestisce(Gestisce gestisce) {
         this.gestisce = gestisce;
+    }
+
+    public Boolean getAddebitato() {
+        return addebitato;
+    }
+
+    public void setAddebitato(Boolean addebitato) {
+        this.addebitato = addebitato;
     }
 }

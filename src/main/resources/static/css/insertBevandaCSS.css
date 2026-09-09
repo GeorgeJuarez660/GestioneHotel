@@ -1,0 +1,29 @@
+/*
+ * Stili della pagina insertBevanda.html.
+ * Estratti dal template: il file HTML resta solo struttura.
+ */
+
+/* Stili locali alla pagina: le caselle di spunta non sono previste da style.css */
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0;
+}
+
+.check-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: var(--color-brass);
+  border: none;
+  padding: 0;
+}
+
+.check-row label {
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 400;
+  color: var(--color-ivory);
+}

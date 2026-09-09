@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import io.jsonwebtoken.Claims;
 import it.rf.hotel.config.JWTConfig;
 import it.rf.hotel.dto.BevandaResponse;
+import it.rf.hotel.dto.ConsumaRequest;
 import it.rf.hotel.dto.FeedbackDto;
 import it.rf.hotel.dto.GuidaDto;
 import it.rf.hotel.dto.NavettaDto;
@@ -29,6 +30,7 @@ import it.rf.hotel.dto.TaxiRequest;
 import it.rf.hotel.exception.BevandaReferencedException;
 import it.rf.hotel.exception.CodiceDuplicatoException;
 import it.rf.hotel.exception.GuidaReferencedException;
+import it.rf.hotel.exception.InvalidDataCheckException;
 import it.rf.hotel.exception.NavettaReferencedException;
 import it.rf.hotel.exception.NotClienteFoundExpcetion;
 import it.rf.hotel.exception.PacchettoReferencedException;
@@ -311,8 +313,35 @@ public class DipendenteSideController {
         catch (CodiceDuplicatoException exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE DUPLICATO CODICE PRENOTAZIONE");
         }
+        catch (InvalidDataCheckException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE DATI CHECK-IN/CHECK-OUT");
+        }
         catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE MODIFICA PRENOTAZIONE");
+        }
+    }
+
+    @PutMapping("/confirmConsumazione")
+    public ResponseEntity<String> confirmConsumazione(@Valid @RequestBody List<ConsumaRequest> consumazioni, @RequestParam String cfPossessore) {
+        try {
+            String esito = prenotazioneService.confermaConsumazione(consumazioni, cfPossessore);
+
+            return ResponseEntity.ok(esito);
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE MODIFICA CONSUMAZIONE");
+        }
+    }
+
+    @PutMapping("/confirmTaxi")
+    public ResponseEntity<String> confirmTaxi(@Valid @RequestBody List<ConsumaRequest> consumazioni, @RequestParam String cfPossessore) {
+        try {
+            String esito = prenotazioneService.addebitaTaxi(cfPossessore);
+
+            return ResponseEntity.ok(esito);
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE MODIFICA CORSE TAXI");
         }
     }
 

@@ -1,0 +1,159 @@
+/*
+ * Stili della pagina bookStanzeAndNavetta.html.
+ * Estratti dal template: il file HTML resta solo struttura.
+ */
+
+/* Stili locali alla pagina: le scelte non sono piu' righe di tabella ma
+   card orizzontali, con il nome a sinistra e i dati a destra. */
+.scelta-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.scelta-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(170px, 240px) 1fr;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--color-ink-border);
+  border-radius: var(--radius-md);
+  background: var(--color-ink-soft);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+/* I pacchetti non hanno foto: una colonna in meno. */
+.scelta-card--senza-foto {
+  grid-template-columns: minmax(170px, 240px) 1fr;
+}
+
+.scelta-card:hover {
+  border-color: var(--color-brass-dim);
+}
+
+.scelta-card--scelta {
+  border-color: var(--color-brass);
+  background: var(--color-ink-softer);
+}
+
+.scelta-card--bloccata {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* La spunta sparisce alla vista ma resta nel DOM: la card e' una <label>,
+   quindi il click continua a selezionare e il campo resta raggiungibile da
+   tastiera. A dire cosa e' scelto ci pensa il bordo ottone della card. */
+.scelta-card input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Senza il quadratino serve un segno visibile per chi naviga da tastiera. */
+.scelta-card:focus-within {
+  border-color: var(--color-brass-strong);
+}
+
+.scelta-card__foto {
+  width: 170px;
+  height: 115px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  display: block;
+}
+
+.scelta-card__nome {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.scelta-card__titolo {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--color-ivory);
+  line-height: 1.2;
+}
+
+.scelta-card__sottotitolo {
+  font-size: 0.78rem;
+  color: var(--color-ivory-dim);
+}
+
+.scelta-card__dati {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  min-width: 0;
+}
+
+.scelta-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.84rem;
+  color: var(--color-ivory);
+}
+
+.scelta-dato__etichetta {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-brass);
+}
+
+.scelta-vuoto {
+  font-size: 0.85rem;
+  color: var(--color-ivory-dim);
+  margin: 0;
+}
+
+/* Sotto i 760px la card si impila: foto sopra, poi nome e dati. */
+@media (max-width: 760px) {
+  .scelta-card,
+  .scelta-card--senza-foto {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .scelta-card__foto {
+    width: 100%;
+    height: 170px;
+  }
+}
+
+/* Sezione di un servizio non compreso nel pacchetto scelto. */
+.panel--bloccato {
+  opacity: 0.55;
+}
+
+.riepilogo {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+  color: var(--color-ivory-dim);
+}
+
+.riepilogo strong {
+  color: var(--color-ivory);
+  font-weight: 600;
+}
+
+.riepilogo--totale strong {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--color-brass-strong);
+}

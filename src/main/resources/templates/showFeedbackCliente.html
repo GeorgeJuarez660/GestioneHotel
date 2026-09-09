@@ -5,20 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>I miei feedback - Gestionale Hotel</title>
 <link rel="stylesheet" th:href="@{/css/style.css}">
-<style>
-  /* Stile locale alla pagina: le note arrivano a 2000 caratteri, quindi
-     devono andare a capo invece di allargare la tabella. */
-  .data-table td.cella-note {
-    white-space: normal;
-    max-width: 720px;
-  }
-
-  .data-table td.cella-indice {
-    color: var(--color-brass);
-    font-weight: 600;
-    white-space: nowrap;
-  }
-</style>
+<link rel="stylesheet" th:href="@{/css/showFeedbackClienteCSS.css}">
 </head>
 <body>
 
@@ -75,131 +62,7 @@
 </main>
 
 <script th:src="@{/js/common.js}"></script>
-<script>
-  const ENDPOINT_CLIENTE = API_BASE + '/homepage/cliente';
-
-  const MESSAGGIO_ACCESSO_NEGATO = 'ACCESSO NEGATO: effettua di nuovo l\'accesso.';
-
-  /*
-   * Verifica dell'accesso prima delle operazioni protette: /check deve
-   * restituire un cliente.
-   */
-  async function accessoConsentito() {
-    try {
-      const response = await fetch(ENDPOINT_CLIENTE + '/check', {
-        method: 'GET',
-        headers: { 'Authorization': 'Bearer ' + (recuperaToken() || '') }
-      });
-
-      if (!response.ok) return false;
-
-      const corpo = await leggiCorpoRisposta(response);
-
-      return corpo !== null && typeof corpo === 'object' && corpo.id != null;
-    } catch (errore) {
-      return false;
-    }
-  }
-
-  const avvisoToken = document.getElementById('avvisoToken');
-  const messaggioBenvenuto = document.getElementById('messaggioBenvenuto');
-  const esitoElenco = document.getElementById('esitoElenco');
-  const corpoTabella = document.getElementById('corpoTabella');
-
-  function mostraRigaVuota(messaggio) {
-    corpoTabella.innerHTML = '';
-    const riga = document.createElement('tr');
-    const cella = document.createElement('td');
-    cella.className = 'data-table__empty';
-    cella.colSpan = 2;
-    cella.textContent = messaggio;
-    riga.appendChild(cella);
-    corpoTabella.appendChild(riga);
-  }
-
-  function creaRiga(feedback, indice) {
-    const riga = document.createElement('tr');
-
-    const cellaIndice = document.createElement('td');
-    cellaIndice.className = 'cella-indice';
-    cellaIndice.textContent = indice;
-    riga.appendChild(cellaIndice);
-
-    const cellaNote = document.createElement('td');
-    cellaNote.className = 'cella-note';
-    cellaNote.textContent = feedback.note || '-';
-    riga.appendChild(cellaNote);
-
-    return riga;
-  }
-
-  /*
-   * Il codice fiscale non viene mandato dalla pagina: l'endpoint lo ricava dal
-   * claim "clienteCF" del token, quindi basta inoltrare l'header Authorization.
-   */
-  async function leggiFeedback() {
-    nascondiEsito(esitoElenco);
-    mostraRigaVuota('Caricamento in corso...');
-
-    const token = recuperaToken();
-
-    if (!token) {
-      mostraRigaVuota('Nessun dato disponibile.');
-      return;
-    }
-
-    if (!(await accessoConsentito())) {
-      mostraRigaVuota('Nessun dato disponibile.');
-      mostraEsito(esitoElenco, MESSAGGIO_ACCESSO_NEGATO, 'error');
-      return;
-    }
-
-    try {
-      const response = await fetch(ENDPOINT_CLIENTE + '/readFeedbackByClienteCF', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer ' + token
-        }
-      });
-
-      const corpo = await leggiCorpoRisposta(response);
-
-      if (!response.ok) {
-        mostraRigaVuota('Nessun dato disponibile.');
-        mostraEsito(esitoElenco, corpo || 'Errore durante la lettura dei feedback.', 'error');
-        return;
-      }
-
-      if (!Array.isArray(corpo) || corpo.length === 0) {
-        mostraRigaVuota('Non hai ancora lasciato nessun feedback.');
-        return;
-      }
-
-      corpoTabella.innerHTML = '';
-      corpo.forEach(function (feedback, posizione) {
-        corpoTabella.appendChild(creaRiga(feedback, posizione + 1));
-      });
-    } catch (errore) {
-      mostraRigaVuota('Nessun dato disponibile.');
-      mostraEsito(esitoElenco, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
-    }
-  }
-
-  const token = recuperaToken();
-
-  if (!token) {
-    avvisoToken.hidden = false;
-    messaggioBenvenuto.textContent = 'Nessun accesso effettuato.';
-  } else {
-    const username = decodificaUsernameToken(token);
-    messaggioBenvenuto.textContent = username ? ('Accesso effettuato come ' + username) : 'Accesso effettuato.';
-  }
-
-  document.getElementById('btnAggiorna').addEventListener('click', leggiFeedback);
-
-  leggiFeedback();
-</script>
+<script th:src="@{/js/showFeedbackClienteJS.js}"></script>
 
 </body>
 </html>

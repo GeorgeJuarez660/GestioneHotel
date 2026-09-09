@@ -20,8 +20,8 @@ public interface TaxiRepository extends JpaRepository<Taxi, Long> {
     public List<Taxi> findByGestiscePrenotazioneCodice(String codice);
 
     @NativeQuery(value = "SELECT t.* from taxi t, gestisce g, prenotazioni p, clienti c where t.gestisce_id=g.gestisce_id and g.prenotazione_id=p.prenotazione_id and p.cliente_id=c.cliente_id " + 
-                " and c.nome = ?1 and c.cognome = ?2")
-    public Optional<List<Taxi>> findByNomeAndCognome(String nome, String cognome);
+                " and c.codice_fiscale = ?1")
+    public Optional<List<Taxi>> findByCodiceFiscale(String codiceFiscale);
 
     /*Spring Data richiedono una transazione attiva: senza, ottieni un InvalidDataAccessApiUsageException
      ("No EntityManager with actual transaction available for current thread"), oppure — se sei dentro

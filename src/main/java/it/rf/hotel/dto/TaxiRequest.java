@@ -36,13 +36,14 @@ public class TaxiRequest {
     @Positive(message = "Numero persone non valido")
     private Integer numPersone;
 
-    @NotBlank(message = "Nome possessore obbligatorio")
-    @Size(max = 100, message = "Nome possessore troppo lungo")
-    private String nomePossessore;
+    @NotBlank(message = "Codice fiscale possessore obbligatorio")
+    @Size(max = 16, message = "Codice fiscale possessore troppo lungo")
+    private String cfPossessore;
 
-    @NotBlank(message = "Cognome possessore obbligatorio")
-    @Size(max = 100, message = "Cognome possessore troppo lungo")
+    private String nomePossessore;
     private String cognomePossessore;
+
+    private Boolean addebitato = false;
 
     public TaxiRequest() {
     }
@@ -68,9 +69,15 @@ public class TaxiRequest {
     public Integer getNumPersone() { return numPersone; }
     public void setNumPersone(Integer numPersone) { this.numPersone = numPersone; }
 
+    public String getCfPossessore() { return cfPossessore; }
+    public void setCfPossessore(String cfPossessore) { this.cfPossessore = cfPossessore; }
+
     public String getNomePossessore() { return nomePossessore; }
     public void setNomePossessore(String nomePossessore) { this.nomePossessore = nomePossessore; }
 
     public String getCognomePossessore() { return cognomePossessore; }
     public void setCognomePossessore(String cognomePossessore) { this.cognomePossessore = cognomePossessore; }
+
+    public Boolean getAddebitato() { return addebitato; }
+    public void setAddebitato(Boolean addebitato) { this.addebitato = addebitato; }
 }

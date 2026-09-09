@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Area dipendente - Gestionale Hotel</title>
 <link rel="stylesheet" th:href="@{/css/style.css}">
+<link rel="stylesheet" th:href="@{/css/homepageDipendenteCSS.css}">
 </head>
 <body>
 
@@ -182,79 +183,7 @@
 </main>
 
 <script th:src="@{/js/common.js}"></script>
-<script>
-  const ENDPOINT_DIPENDENTE = API_BASE + '/homepage/dipendente';
-
-  const avvisoDati = document.getElementById('avvisoDati');
-  const messaggioBenvenuto = document.getElementById('messaggioBenvenuto');
-  const esitoRiepilogo = document.getElementById('esitoRiepilogo');
-
-  const dipendente = recuperaToken();
-
-  if (!dipendente) {
-    avvisoDati.hidden = false;
-    messaggioBenvenuto.textContent = 'Nessun accesso effettuato.';
-  } else {
-    const username = decodificaUsernameToken(dipendente);
-    messaggioBenvenuto.textContent = username ? ('Benvenuto, ' + username) : 'Accesso effettuato.';
-  }
-
-  /*
-   * Riepilogo: ogni card mostra quanti elementi restituisce il rispettivo
-   * endpoint di lettura. L'inserimento vero e proprio (/addStanza e
-   * /addNavetta) avviene nelle pagine dedicate raggiungibili dalle card.
-   */
-  async function contaElementi(percorso, contatore) {
-    try {
-      const response = await fetch(ENDPOINT_DIPENDENTE + percorso, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      });
-
-      const corpo = await leggiCorpoRisposta(response);
-
-      if (response.ok && Array.isArray(corpo)) {
-        contatore.textContent = corpo.length;
-      } else {
-        contatore.textContent = '-';
-        mostraEsito(esitoRiepilogo, corpo || 'Errore durante la lettura dei dati.', 'error');
-      }
-    } catch (errore) {
-      contatore.textContent = '-';
-      mostraEsito(esitoRiepilogo, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
-    }
-  }
-
-  async function logout() {
-    const token = recuperaToken();
-    if (token) {
-      try {
-        await fetch(API_BASE + '/hotel/logout', {
-          method: 'GET',
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-      } catch (e) {
-        // anche se la chiamata fallisce, procedi comunque a pulire il client
-      }
-    }
-    rimuoviToken();
-    window.location.href = '/hotel/login-dipendente';
-  }
-
-  contaElementi('/readPrenotazioni', document.getElementById('contatorePrenotazioni'));
-  contaElementi('/readNavette', document.getElementById('contatoreNavette'));
-  contaElementi('/readGuide', document.getElementById('contatoreGuide'));
-  contaElementi('/readPiscine', document.getElementById('contatorePiscine'));
-  contaElementi('/readStanze', document.getElementById('contatoreStanze'));
-  contaElementi('/readPacchetti', document.getElementById('contatorePacchetti'));
-  contaElementi('/readBevande', document.getElementById('contatoreBevande'));
-  contaElementi('/readTaxi', document.getElementById('contatoreTaxi'));
-  contaElementi('/readFeedback', document.getElementById('contatoreFeedback'));
-
-  document.getElementById('logout').addEventListener('click', function () {
-    logout();
-  });
-</script>
+<script th:src="@{/js/homepageDipendenteJS.js}"></script>
 
 </body>
 </html>

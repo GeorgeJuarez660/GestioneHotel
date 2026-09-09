@@ -35,7 +35,7 @@ public class Dipendente {
     @Column(nullable = false) 
     private String lingua;
 
-    @Column(nullable = false) 
+    @Column(nullable = false, unique = true)
     private String codDipendente;
 
     @ManyToOne(optional = false) 

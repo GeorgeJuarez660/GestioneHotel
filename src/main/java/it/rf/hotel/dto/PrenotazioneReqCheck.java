@@ -19,6 +19,11 @@ public class PrenotazioneReqCheck {
     @DecimalMin(value = "0.0", inclusive = true, message = "Prezzo totale non valido")
     private BigDecimal prezzoTotale;
 
+    /* Il prezzo effettivo lo ricalcola il service man mano che si addebitano
+       consumazioni e taxi: puo' arrivare vuoto, quindi niente @NotNull. */
+    @DecimalMin(value = "0.0", inclusive = true, message = "Prezzo effettivo non valido")
+    private BigDecimal prezzoEffettivo;
+
     private LocalDate dataCheckIn;
 
     private LocalDate dataCheckOut;
@@ -64,6 +69,9 @@ public class PrenotazioneReqCheck {
 
     public BigDecimal getPrezzoTotale() { return prezzoTotale; }
     public void setPrezzoTotale(BigDecimal prezzoTotale) { this.prezzoTotale = prezzoTotale; }
+
+    public BigDecimal getPrezzoEffettivo() { return prezzoEffettivo; }
+    public void setPrezzoEffettivo(BigDecimal prezzoEffettivo) { this.prezzoEffettivo = prezzoEffettivo; }
 
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }

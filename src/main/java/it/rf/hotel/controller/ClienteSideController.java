@@ -1,22 +1,24 @@
 package it.rf.hotel.controller;
 
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.jsonwebtoken.Claims;
 import it.rf.hotel.config.JWTConfig;
 import it.rf.hotel.dto.FeedbackDto;
 import it.rf.hotel.dto.PrenotazioneResponse;
-import it.rf.hotel.dto.TaxiRequest;
 import it.rf.hotel.exception.CodiceDuplicatoException;
 import it.rf.hotel.exception.NavettaNoSeatsException;
 import it.rf.hotel.exception.StanzaBookedException;
@@ -145,51 +147,15 @@ public class ClienteSideController {
         }
     }
 
-    @GetMapping("/readFeedbackByClienteCF")
-    public ResponseEntity<?> readFeedback(@RequestHeader("Authorization") String authHeader) {
-        if(authHeader != null && !authHeader.startsWith("Bearer ")){
-            return ResponseEntity.status(HttpStatusCode.valueOf(403)).body("ACCESSO NEGATO");
+    @GetMapping("/readFeedback/{clienteCF}")
+    public ResponseEntity<?> addFeedback(@PathVariable String clienteCF) {
+        try {
+
+            List<FeedbackDto> esito = feedbackService.elencoFeedbackInBaseAlCliente(clienteCF);
+            return ResponseEntity.ok(esito);
         }
-        else{
-            String token = authHeader.substring(7);
-
-            if (!jwtConfig.isValid(token)) {
-                return ResponseEntity.status(HttpStatusCode.valueOf(403)).body("ACCESSO NEGATO");
-            }
-            else{
-                Claims claims = jwtConfig.parseClaims(token);
-                String clienteCF = claims.get("clienteCF", String.class);
-                
-                List<FeedbackDto> feedbacks = feedbackService.elencoFeedbackInBaseAlCliente(clienteCF);
-
-                return ResponseEntity.ok(feedbacks);
-            }
-
-        }
-    }
-
-    @GetMapping("/readTaxiByCliente")
-    public ResponseEntity<?> readTaxi(@RequestHeader("Authorization") String authHeader) {
-        if(authHeader != null && !authHeader.startsWith("Bearer ")){
-            return ResponseEntity.status(HttpStatusCode.valueOf(403)).body("ACCESSO NEGATO");
-        }
-        else{
-            String token = authHeader.substring(7);
-
-            if (!jwtConfig.isValid(token)) {
-                return ResponseEntity.status(HttpStatusCode.valueOf(403)).body("ACCESSO NEGATO");
-            }
-            else{
-                Claims claims = jwtConfig.parseClaims(token);
-                Long clienteId = claims.get("clienteId", Long.class);
-
-                Cliente cliente = clienteService.trovaCliente(clienteId);
-
-                List<TaxiRequest> corse = taxiService.elencoTaxiPrenotazione(cliente.getNome(), cliente.getCognome());
-
-                return ResponseEntity.ok(corse);
-            }
-
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE LETTURA FEEDBACK");
         }
     }
 

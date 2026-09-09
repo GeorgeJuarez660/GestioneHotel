@@ -43,11 +43,6 @@ public class SwitchPagesController {
         return "homepageDipendente";
     }
 
-    @GetMapping("/logout/")
-    public String logout() {
-        return "chooseRegisterLogin";
-    }
-
     //------PRENOTAZIONE, STANZE, FEEDBACK E SERVIZIO NAVETTA, GUIDA E PISCINA
 
     @GetMapping("/cliente/prenotazione")

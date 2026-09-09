@@ -48,8 +48,8 @@ public class Prenotazione {
     @JoinColumn(name = "dipendente_id")
     private Dipendente receptionist;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "operatore_esterno_id")
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "operatore_esterno_id", nullable = true)
     private OperatoreEsterno receptionistEsterno;
 
     public Long getId() {

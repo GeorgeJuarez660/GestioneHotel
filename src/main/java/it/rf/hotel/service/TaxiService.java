@@ -27,26 +27,44 @@ public class TaxiService {
 
     public String creaTaxi(TaxiRequest dto) throws NotClienteFoundExpcetion {
 
-        Gestisce gestisce = gestisceRepository.findByNomeAndCognome(dto.getNomePossessore(), dto.getCognomePossessore()).orElse(null);
+        Gestisce gestisce = gestisceRepository.findByCodiceFiscaleAndDataCheckOutNull(dto.getCfPossessore()).orElse(null);
+        String response = "";
 
         if (gestisce == null) {
             throw new NotClienteFoundExpcetion(dto.getNomePossessore(), dto.getCognomePossessore());
         }
         else{
 
-            Taxi taxi = new Taxi();
-            taxi.setData(dto.getData());
-            taxi.setOra(dto.getOra());
-            taxi.setLuogoPartenza(dto.getLuogoPartenza());
-            taxi.setLuogoDestinazione(dto.getLuogoDestinazione());
-            taxi.setPrezzo(new BigDecimal(7));
-            taxi.setNumPersone(dto.getNumPersone());
-            taxi.setGestisce(gestisce);
-            taxiRepository.save(taxi);
+            if(dto.getNumPersone() > gestisce.getNumeroPersone()){
+                response = "NUMERO DI PERSONE SUPERIORE A QUELLO DELLA PRENOTAZIONE";
+            }
+            else{
+                if(dto.getData().isBefore(gestisce.getDataCheckIn())){
+                    response = "DATA NON VALIDA";
+                }
+                else{
+                    if(dto.getNumPersone() <= 0){
+                        response = "NUMERO DI PERSONE NON VALIDO";
+                    }
+                    else{
+                        Taxi taxi = new Taxi();
+                        taxi.setData(dto.getData());
+                        taxi.setOra(dto.getOra());
+                        taxi.setLuogoPartenza(dto.getLuogoPartenza());
+                        taxi.setLuogoDestinazione(dto.getLuogoDestinazione());
+                        taxi.setPrezzo(new BigDecimal(7));
+                        taxi.setNumPersone(dto.getNumPersone());
+                        taxi.setAddebitato(dto.getAddebitato());
+                        taxi.setGestisce(gestisce);
+                        taxiRepository.save(taxi);
 
+                        response = "TAXI INSERITO CON SUCCESSO";
+                    }
+                }
+            }
         }
 
-        return "TAXI AGGIUNTO CON SUCCESSO";   
+        return response;   
     }
 
     public List<TaxiRequest> elencoTaxi() {
@@ -61,9 +79,9 @@ public class TaxiService {
         return elenco;
     }
 
-    public List<TaxiRequest> elencoTaxiPrenotazione(String nomePossessore, String cognomePossessore) {
+    public List<TaxiRequest> elencoTaxiPrenotazione(String cfPossesore, String cognomePossessore) {
 
-        List<Taxi> corse = taxiRepository.findByNomeAndCognome(nomePossessore, cognomePossessore).orElse(null);
+        List<Taxi> corse = taxiRepository.findByCodiceFiscale(cfPossesore).orElse(null);
         List<TaxiRequest> elenco = new ArrayList<>();
 
         for(Taxi taxi : corse){
@@ -88,27 +106,50 @@ public class TaxiService {
     public String aggiornaTaxi(Long id, TaxiRequest dto) {
 
         Taxi taxi = taxiRepository.findById(id).orElse(null);
+        String response = "";
         taxi.setData(dto.getData());
         taxi.setOra(dto.getOra());
         taxi.setLuogoPartenza(dto.getLuogoPartenza());
         taxi.setLuogoDestinazione(dto.getLuogoDestinazione());
         taxi.setPrezzo(dto.getPrezzo());
         taxi.setNumPersone(dto.getNumPersone());
+        taxi.setAddebitato(dto.getAddebitato());
 
         // La corsa puo' essere spostata su un'altra prenotazione.
-        if (dto.getNomePossessore() != null && dto.getCognomePossessore() != null) {
-            Gestisce gestisce = gestisceRepository.findByNomeAndCognome(dto.getNomePossessore(), dto.getCognomePossessore()).orElse(null);
+        if (dto.getCfPossessore() != null) {
+            Gestisce gestisce = gestisceRepository.findByCodiceFiscaleAndDataCheckOutNull(dto.getCfPossessore()).orElse(null);
 
             if (gestisce == null) {
-                return "PRENOTAZIONE NON TROVATA";
+                response = "PRENOTAZIONE NON TROVATA";
+            }
+            else{
+
+                if(dto.getNumPersone() > gestisce.getNumeroPersone()){
+                    response = "NUMERO DI PERSONE SUPERIORE A QUELLO DELLA PRENOTAZIONE";
+                }
+                else{
+                    if(dto.getData().isBefore(gestisce.getDataCheckIn())){
+                        response = "DATA NON VALIDA";
+                    }
+                    else{
+                        if(dto.getNumPersone() <= 0){
+                            response = "NUMERO DI PERSONE NON VALIDO";
+                        }
+                        else{
+                            taxi.setGestisce(gestisce);
+                            taxiRepository.save(taxi);
+                            response = "TAXI AGGIORNATO CON SUCCESSO";
+                        }
+                    }
+                }
             }
 
-            taxi.setGestisce(gestisce);
+        }
+        else{
+            response = "CODICE FISCALE DEL CLIENTE NON VALIDO";
         }
 
-        taxiRepository.save(taxi);
-
-        return "TAXI MODIFICATO CON SUCCESSO";
+        return response;
     }
 
     public String eliminaTaxi(Long id) {
@@ -143,6 +184,7 @@ public class TaxiService {
         dto.setLuogoDestinazione(taxi.getLuogoDestinazione());
         dto.setPrezzo(taxi.getPrezzo());
         dto.setNumPersone(taxi.getNumPersone());
+        dto.setAddebitato(taxi.getAddebitato());
 
         if (taxi.getGestisce() != null && taxi.getGestisce().getPrenotazione() != null) {
             if (taxi.getGestisce().getPrenotazione().getCliente() != null) {

@@ -27,12 +27,12 @@ public class Guida {
     @Column(nullable = false)
     private String luogo;
 
-    @ManyToOne
-    @JoinColumn(name = "dipendente_id")
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "dipendente_id", nullable = true)
     private Dipendente operatoreInterno;
 
-    @ManyToOne
-    @JoinColumn(name = "operatore_esterno_id")
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "operatore_esterno_id", nullable = true)
     private OperatoreEsterno operatoreEsterno;
 
     public Long getId() {
