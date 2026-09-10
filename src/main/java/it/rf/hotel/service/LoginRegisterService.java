@@ -26,8 +26,6 @@ import java.util.Optional;
 @Service
 public class LoginRegisterService {
 
-    private final ClienteService clienteService;
-
     @Autowired
     private ClienteRepository clienteRepository;
 
@@ -39,10 +37,6 @@ public class LoginRegisterService {
 
     @Autowired
     private CategoriaDipendenteRepository categoriaDipendenteRepository;
-
-    LoginRegisterService(ClienteService clienteService) {
-        this.clienteService = clienteService;
-    }
 
     public String registraCliente(ClienteRequest dto) throws CFDuplicatoException, UnderageUtenteException {
         Cliente cliente;
