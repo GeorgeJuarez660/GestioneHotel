@@ -1,0 +1,17 @@
+/*
+ * Stili della pagina showFeedbackCliente.html.
+ * Estratti dal template: il file HTML resta solo struttura.
+ */
+
+/* Stile locale alla pagina: le note arrivano a 2000 caratteri, quindi
+   devono andare a capo invece di allargare la tabella. */
+.data-table td.cella-note {
+  white-space: normal;
+  max-width: 720px;
+}
+
+.data-table td.cella-indice {
+  color: var(--color-brass);
+  font-weight: 600;
+  white-space: nowrap;
+}

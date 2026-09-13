@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Servizio taxi - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" id="linkIndietro" th:href="@{/hotel/homepage/dipendente/}">&larr; Torna al pannello</a>
+</header>
+
+<main class="manage-shell">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow" id="areaCorrente">Area Dipendente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">Servizio taxi</h1>
+      <p class="dashboard-header__welcome">Registra una corsa in taxi e addebitala sul conto del soggiorno.</p>
+    </div>
+  </div>
+
+  <div class="manage-grid">
+
+    <section class="panel">
+      <div class="panel__header">
+        <h2 class="panel__title">Nuova corsa</h2>
+      </div>
+      <hr class="divider-brass">
+
+      <div id="esito" class="esito" hidden></div>
+
+      <!-- Solo lato dipendente: si sceglie il soggiorno e da li' si ricava l'intestatario. -->
+      <div class="field" id="campoPrenotazione">
+        <label for="codicePrenotazione">Prenotazione</label>
+        <select id="codicePrenotazione" name="codicePrenotazione">
+          <option value="">Caricamento in corso...</option>
+        </select>
+        <span class="hint">Serve solo a ricavare l'intestatario della corsa.</span>
+      </div>
+
+      <form id="formTaxi" onsubmit="gestisciInserimento(event)">
+        <div class="field">
+          <label for="cfPossessore">Codice fiscale possessore</label>
+          <input type="text" id="cfPossessore" name="cfPossessore" maxlength="16" placeholder="Si compila da solo" readonly required>
+          <span class="hint">E' il dato con cui la corsa viene agganciata al soggiorno.</span>
+        </div>
+
+        <!-- Nome e cognome servono solo a farti vedere di chi si tratta: non vengono inviati. -->
+        <div class="field">
+          <label for="nomePossessore">Nome possessore</label>
+          <input type="text" id="nomePossessore" name="nomePossessore" maxlength="100" placeholder="Si compila da solo" readonly>
+        </div>
+        <div class="field">
+          <label for="cognomePossessore">Cognome possessore</label>
+          <input type="text" id="cognomePossessore" name="cognomePossessore" maxlength="100" placeholder="Si compila da solo" readonly>
+        </div>
+
+        <div class="field">
+          <label for="data">Data</label>
+          <input type="date" id="data" name="data" required>
+        </div>
+        <div class="field">
+          <label for="ora">Ora</label>
+          <input type="time" id="ora" name="ora" required>
+        </div>
+        <div class="field">
+          <label for="luogoPartenza">Luogo di partenza</label>
+          <input type="text" id="luogoPartenza" name="luogoPartenza" maxlength="255" placeholder="Es. Hotel" required>
+        </div>
+        <div class="field">
+          <label for="luogoDestinazione">Luogo di destinazione</label>
+          <input type="text" id="luogoDestinazione" name="luogoDestinazione" maxlength="255" placeholder="Es. Stazione centrale" required>
+        </div>
+        <div class="field">
+          <label for="numPersone">Numero persone</label>
+          <input type="number" id="numPersone" name="numPersone" min="1" step="1" placeholder="Es. 2" required>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Aggiungi taxi</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel__header">
+        <h2 class="panel__title" id="titoloElenco">Corse registrate</h2>
+        <button type="button" class="btn btn-secondary btn-small" id="btnAggiorna">Aggiorna elenco</button>
+      </div>
+      <hr class="divider-brass">
+
+      <div id="esitoElenco" class="esito" hidden></div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Ora</th>
+              <th>Partenza</th>
+              <th>Destinazione</th>
+              <th>Prezzo</th>
+              <th>Persone</th>
+              <th>Possessore</th>
+              <th id="colonnaAzioni">Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabella">
+            <tr><td class="data-table__empty" colspan="8">Caricamento in corso...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/setTaxiJS.js}"></script>
+
+</body>
+</html>

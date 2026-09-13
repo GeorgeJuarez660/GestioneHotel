@@ -1,19 +1,25 @@
 package it.rf.hotel.service;
 
+import it.rf.hotel.dto.ConsumaRequest;
 import it.rf.hotel.dto.PrenotazioneReqCheck;
 import it.rf.hotel.dto.PrenotazioneResponse;
+import it.rf.hotel.exception.BevandaUnavailableException;
 import it.rf.hotel.exception.CodiceDuplicatoException;
+import it.rf.hotel.exception.InvalidDataCheckException;
 import it.rf.hotel.exception.NavettaNoSeatsException;
 import it.rf.hotel.exception.StanzaBookedException;
 import it.rf.hotel.exception.StanzaTooPeopleException;
 import it.rf.hotel.model.Accede;
+import it.rf.hotel.model.Bevanda;
 import it.rf.hotel.model.Cliente;
 import it.rf.hotel.model.Comprende;
+import it.rf.hotel.model.Consuma;
 import it.rf.hotel.model.Dipendente;
 import it.rf.hotel.model.Gestisce;
 import it.rf.hotel.model.Include;
 import it.rf.hotel.model.MetodoPagamento;
 import it.rf.hotel.model.Navetta;
+import it.rf.hotel.model.OperatoreEsterno;
 import it.rf.hotel.model.Guida;
 import it.rf.hotel.model.Piscina;
 import it.rf.hotel.model.Pacchetto;
@@ -22,15 +28,19 @@ import it.rf.hotel.model.Prenotazione;
 import it.rf.hotel.model.Stanza;
 import it.rf.hotel.model.StatoPagamento;
 import it.rf.hotel.model.StatoPrenotazione;
+import it.rf.hotel.model.Taxi;
 import it.rf.hotel.repository.AccedeRepository;
+import it.rf.hotel.repository.BevandaRepository;
 import it.rf.hotel.repository.ClienteRepository;
 import it.rf.hotel.repository.ComprendeRepository;
+import it.rf.hotel.repository.ConsumaRepository;
 import it.rf.hotel.repository.DipendenteRepository;
 import it.rf.hotel.repository.GestisceRepository;
 import it.rf.hotel.repository.GuidaRepository;
 import it.rf.hotel.repository.IncludeRepository;
 import it.rf.hotel.repository.MetodoPagamentoRepository;
 import it.rf.hotel.repository.NavettaRepository;
+import it.rf.hotel.repository.OperatoreEsternoRepository;
 import it.rf.hotel.repository.PacchettoRepository;
 import it.rf.hotel.repository.PagamentoRepository;
 import it.rf.hotel.repository.PiscinaRepository;
@@ -38,12 +48,14 @@ import it.rf.hotel.repository.PrenotazioneRepository;
 import it.rf.hotel.repository.StanzaRepository;
 import it.rf.hotel.repository.StatoPagamentoRepository;
 import it.rf.hotel.repository.StatoPrenotazioneRepository;
+import it.rf.hotel.repository.TaxiRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.lang.Arrays;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,13 +77,22 @@ public class PrenotazioneService {
     private DipendenteRepository dipendenteRepository;
 
     @Autowired
+    private OperatoreEsternoRepository operatoreEsternoRepository;
+
+    @Autowired
     private StanzaRepository stanzaRepository;
 
     @Autowired
     private PacchettoRepository pacchettoRepository;
 
     @Autowired
+    private BevandaRepository bevandaRepository;
+
+    @Autowired
     private NavettaRepository navettaRepository;
+
+    @Autowired
+    private TaxiRepository taxiRepository;
 
     @Autowired
     private GuidaRepository guidaRepository;
@@ -84,6 +105,9 @@ public class PrenotazioneService {
 
     @Autowired
     private ComprendeRepository comprendeRepository;
+
+    @Autowired
+    private ConsumaRepository consumaRepository;
 
     @Autowired
     private IncludeRepository includeRepository;
@@ -127,8 +151,14 @@ public class PrenotazioneService {
             StatoPrenotazione stato = statoPrenotazioneRepository.findByStato("IN_ATTESA").orElse(null);
             prenotazione.setStato(stato);
 
-            Dipendente receptionist = dipendenteRepository.findByCodiceFiscale("VRDLGU80A01H501W").orElse(null);
-            prenotazione.setReceptionist(receptionist);
+            if(cliente.getLingua().equals("IT")){
+                Dipendente receptionist = trovaReceptionist(cliente.getLingua());
+                prenotazione.setReceptionist(receptionist);
+            }
+            else{
+                OperatoreEsterno receptionistEsterno = trovaReceptionistEsterno(cliente.getLingua());
+                prenotazione.setReceptionistEsterno(receptionistEsterno);
+            }
 
             List<String> codStanze = Arrays.asList(dto.getCodiceStanza().trim().split(",")); //tolgo gli spazi e li spezzetto
 
@@ -262,6 +292,47 @@ public class PrenotazioneService {
         return "PRENOTAZIONE AGGIUNTA CON SUCCESSO";
     }
 
+
+    private Dipendente trovaReceptionist(String linguaCliente) {
+        
+        long numDipendenti = dipendenteRepository.countByLingua(linguaCliente);
+        Dipendente dipendente = null;
+        if(numDipendenti > 1){
+            String cfReceptionist = dipendenteRepository.findByLinguaAndPrenotazioni(linguaCliente);
+
+            dipendente = dipendenteRepository.findByCodiceFiscale(cfReceptionist).orElse(null);
+        }
+        else if(numDipendenti == 1){
+            dipendente = dipendenteRepository.findByLingua(linguaCliente).orElse(null);
+        }
+        else{
+            dipendente = null;
+        }
+
+        return dipendente;
+
+    }
+
+    private OperatoreEsterno trovaReceptionistEsterno(String linguaCliente) {
+        
+        long numDipendenti = operatoreEsternoRepository.countByLingua(linguaCliente);
+        OperatoreEsterno operatore = null;
+        if(numDipendenti > 1){
+            String cfReceptionist = operatoreEsternoRepository.findByLinguaAndPrenotazioni(linguaCliente);
+
+            operatore = operatoreEsternoRepository.findByCodiceFiscale(cfReceptionist).orElse(null);
+        }
+        else if(numDipendenti == 1){
+            operatore = operatoreEsternoRepository.findByLingua(linguaCliente).orElse(null);
+        }
+        else{
+            operatore = null;
+        }
+
+        return operatore;
+
+    }
+
     public List<PrenotazioneResponse> elencoPrenotazioni() {
 
         List<Prenotazione> prenotazioni = prenotazioneRepository.findAll();
@@ -272,7 +343,41 @@ public class PrenotazioneService {
             dto.setCodice(prenotazione.getCodice());
             dto.setDataPrenotazione(prenotazione.getDataPrenotazione());
             dto.setPrezzoTotale(prenotazione.getPrezzoTotale());
-            dto.setPrezzoEffettivo(prenotazione.getPrezzoTotale());
+            dto.setPrezzoEffettivo(prenotazione.getPrezzoEffettivo());
+            dto.setDataInizio(prenotazione.getDataInizio());
+            dto.setDataFine(prenotazione.getDataFine());
+            dto.setStatoPrenotazione(prenotazione.getStato().getStato());
+            dto.setNote(prenotazione.getNote());
+
+            if (prenotazione.getCliente() != null) {
+                dto.setCfCliente(prenotazione.getCliente().getCodiceFiscale());
+                dto.setNomeCliente(prenotazione.getCliente().getNome());
+                dto.setCognomeCliente(prenotazione.getCliente().getCognome());
+            }
+
+            if (prenotazione.getReceptionist() != null) {
+                dto.setCfReceptionist(prenotazione.getReceptionist().getCodiceFiscale());
+                dto.setNomeReceptionist(prenotazione.getReceptionist().getNome());
+                dto.setCognomeReceptionist(prenotazione.getReceptionist().getCognome());
+            }
+
+            elenco.add(dto);
+        }
+
+        return elenco;
+    }
+
+    public List<PrenotazioneResponse> elencoPrenotazioniByCliente(String cfCliente) {
+
+        List<Prenotazione> prenotazioni = prenotazioneRepository.findByClienteCodiceFiscale(cfCliente);
+        List<PrenotazioneResponse> elenco = new ArrayList<>();
+
+        for(Prenotazione prenotazione : prenotazioni){
+            PrenotazioneResponse dto = new PrenotazioneResponse();
+            dto.setCodice(prenotazione.getCodice());
+            dto.setDataPrenotazione(prenotazione.getDataPrenotazione());
+            dto.setPrezzoTotale(prenotazione.getPrezzoTotale());
+            dto.setPrezzoEffettivo(prenotazione.getPrezzoEffettivo());
             dto.setDataInizio(prenotazione.getDataInizio());
             dto.setDataFine(prenotazione.getDataFine());
             dto.setStatoPrenotazione(prenotazione.getStato().getStato());
@@ -332,7 +437,8 @@ public class PrenotazioneService {
 
                 dtoReq = new PrenotazioneReqCheck();
                 dtoReq.setNote(prenotazione.getNote());
-                dtoReq.setPrezzoTotale(prenotazione.getPrezzoEffettivo());
+                dtoReq.setPrezzoTotale(prenotazione.getPrezzoTotale());
+                dtoReq.setPrezzoEffettivo(prenotazione.getPrezzoEffettivo());
                 dtoReq.setNumPersone(gestisce.getNumeroPersone());
                 dtoReq.setCodicePrenotazione(gestisce.getPrenotazione().getCodice());
                 dtoReq.setDataCheckIn(gestisce.getDataCheckIn());
@@ -356,32 +462,91 @@ public class PrenotazioneService {
         return dtoReq;
     }
 
-    public String aggiornaPrenotazione(String codice, PrenotazioneReqCheck dto) throws CodiceDuplicatoException {
+    public String aggiornaPrenotazione(String codice, PrenotazioneReqCheck dto) throws CodiceDuplicatoException, InvalidDataCheckException {
         if(codice.equals(dto.getCodicePrenotazione())){
             StatoPrenotazione statoPrenotazione = statoPrenotazioneRepository.findByStato(dto.getStatoPrenotazione()).orElse(null);
 
             Prenotazione prenotazione = prenotazioneRepository.findByCodice(codice).orElse(null);
             prenotazione.setPrezzoTotale(dto.getPrezzoTotale());
+            prenotazione.setPrezzoEffettivo(dto.getPrezzoEffettivo());
             prenotazione.setNote(dto.getNote());
             prenotazione.setStato(statoPrenotazione);
 
-            prenotazioneRepository.save(prenotazione);
-            
-            Navetta navetta = navettaRepository.findByCodice(dto.getCodiceNavetta()).orElse(null);
-            navetta.setCodice(dto.getCodiceNavetta());
+            if(dto.getDataCheckIn() != null && (!dto.getNote().contains(dto.getDataCheckIn().toString()))){
+                prenotazione.setNote(prenotazione.getNote() == null ? "" : prenotazione.getNote() + " | DATA CHECK-IN: " + dto.getDataCheckIn());
+            }
 
+            if(dto.getDataCheckOut() != null && (!dto.getNote().contains(dto.getDataCheckOut().toString()))){
+                prenotazione.setNote(prenotazione.getNote() == null ? "" : prenotazione.getNote() + " | DATA CHECK-OUT: " + dto.getDataCheckOut());
+            }
+
+            prenotazioneRepository.save(prenotazione);
+
+            Navetta navetta = null;
+            if(dto.getCodiceNavetta() != null && !dto.getCodiceNavetta().isEmpty()){
+                navetta = navettaRepository.findByCodice(dto.getCodiceNavetta()).orElse(null);
+                navetta.setCodice(dto.getCodiceNavetta());
+            }
+
+            Guida guida = null;
+            if(dto.getCodiceGuida() != null && !dto.getCodiceGuida().isEmpty()){
+                guida = guidaRepository.findByCodice(dto.getCodiceGuida()).orElse(null);
+                guida.setCodice(dto.getCodiceGuida());
+            }
+
+            Piscina piscina = null;
+            if(dto.getCodicePiscina() != null && !dto.getCodicePiscina().isEmpty()){
+                piscina = piscinaRepository.findByCodice(dto.getCodicePiscina()).orElse(null);
+                piscina.setCodice(dto.getCodicePiscina());
+            }
+        
             Gestisce gestisce = gestisceRepository.findByPrenotazioneCodice(codice).orElse(null);
+
+            if(prenotazione.getDataInizio().isAfter(dto.getDataCheckIn()) || prenotazione.getDataFine().isBefore(dto.getDataCheckOut())){
+                throw new InvalidDataCheckException();
+            }
+            
             gestisce.setDataCheckIn(dto.getDataCheckIn());
             gestisce.setDataCheckOut(dto.getDataCheckOut());
             gestisce.setNumeroPersone(dto.getNumPersone());
             
             gestisceRepository.save(gestisce);
-            
-            Comprende comprende = comprendeRepository.findByPrenotazioneCodice(codice).orElse(null);
-            comprende.setPrenotazione(prenotazione);
-            comprende.setNavetta(navetta);
 
-            comprendeRepository.save(comprende);
+            if(dto.getCodiceNavetta() != null){
+                if(navetta != null) {
+                    Comprende comprende = comprendeRepository.findByPrenotazioneCodice(codice).orElse(null);
+                    comprende.setPrenotazione(prenotazione);
+                    comprende.setNavetta(navetta);
+                    comprendeRepository.save(comprende);
+                }
+                else{
+                    comprendeRepository.deleteByPrenotazioneCodice(codice);
+                }
+            }
+
+            if(dto.getCodiceGuida() != null){
+                if(guida != null) {
+                    Include include = includeRepository.findByPrenotazioneCodice(codice).orElse(null);
+                    include.setPrenotazione(prenotazione);
+                    include.setGuida(guida);
+                    includeRepository.save(include);
+                }
+                else{
+                    includeRepository.deleteByPrenotazioneCodice(codice);
+                }
+            }
+
+            if(dto.getCodicePiscina() != null){
+                if(piscina != null) {
+                    Accede accede = accedeRepository.findByPrenotazioneCodice(codice).orElse(null);
+                    accede.setPrenotazione(prenotazione);
+                    accede.setPiscina(piscina);
+                    accedeRepository.save(accede);
+                }
+                else{
+                    accedeRepository.deleteByPrenotazioneCodice(codice);
+                }
+            }
 
             StatoPagamento statoPagamento = statoPagamentoRepository.findByStato(dto.getStatoPagamento()).orElse(null);
 
@@ -393,6 +558,87 @@ public class PrenotazioneService {
         }
 
         return "PRENOTAZIONE MODIFICATA CON SUCCESSO";
+    }
+
+    public String confermaConsumazione(List<ConsumaRequest> consumazioni, String cfPossessore) {
+        Gestisce gestisce = gestisceRepository.findByCodiceFiscaleAndDataCheckOutNull(cfPossessore).orElse(null);
+        String response = "";
+
+        if(gestisce != null) { //controlla se la prenotazione ha il check-in effettuato e il check-out non ancora effettuato
+            if(consumazioni != null && !consumazioni.isEmpty()){
+                for(ConsumaRequest consumaReq : consumazioni){
+
+                    Consuma consumaEsistente = consumaRepository.findByGestiscePrenotazioneCodiceAndBevandaNome(gestisce.getPrenotazione().getCodice(), consumaReq.getNomeBevanda());
+
+                    Bevanda bevanda = bevandaRepository.findByNome(consumaReq.getNomeBevanda()).orElse(null);
+                    Integer quantitaOrdinata = consumaReq.getQuantitaOrdinata() != null ? consumaReq.getQuantitaOrdinata() : 0;
+
+                    if(consumaEsistente == null){
+                        consumaEsistente = new Consuma();
+                        consumaEsistente.setGestisce(gestisce);
+                        consumaEsistente.setBevanda(bevanda);
+                    }
+
+                    consumaEsistente.setQuantitaOrdinata(quantitaOrdinata);
+                    consumaEsistente.setPrezzoEffettivo(bevanda.getPrezzoBase().multiply(new BigDecimal(quantitaOrdinata)));
+
+                    consumaRepository.save(consumaEsistente);
+
+                    // La giacenza scala solo per le consumazioni appena registrate.
+                    bevanda.setQuantitaBase(bevanda.getQuantitaBase() - quantitaOrdinata);
+                    bevandaRepository.save(bevanda);
+
+                    Prenotazione prenotazione = gestisce.getPrenotazione();
+                    prenotazione.setPrezzoEffettivo(consumaEsistente.getPrezzoEffettivo().add(prenotazione.getPrezzoEffettivo()));
+                    prenotazione.setNote(prenotazione.getNote() == null ? "" : prenotazione.getNote() + " | CONSUMAZIONE: " + bevanda.getNome() + " x" + quantitaOrdinata + " - PREZZO: " + consumaEsistente.getPrezzoEffettivo());
+                    prenotazioneRepository.save(prenotazione);
+                    
+                    
+                }
+                response = "CONSUMAZIONE CONFERMATA CON SUCCESSO";
+                
+            }
+            else{
+                response = "NESSUNA CONSUMAZIONE DA CONFERMARE";
+            }
+            
+        }
+        else{
+            response = "LA PRENOTAZIONE HA IL CHECK-IN NON EFFETTUATO O IL CHECK-OUT GIA' EFFETTUATO";
+        }
+
+        return response;
+    }
+
+    public String addebitaTaxi(String cf) {
+        Gestisce gestisce = gestisceRepository.findByCodiceFiscaleAndDataCheckOutNull(cf).orElse(null);
+        String response = "";
+
+        if(gestisce != null) {
+            if(gestisce.getDataCheckIn() != null && gestisce.getDataCheckOut() == null) {
+                List<Taxi> taxi = taxiRepository.findByCodiceFiscale(cf).orElse(null);
+
+                Prenotazione prenotazione = null;
+                for(Taxi t : taxi){
+                    t.setAddebitato(true);
+                    taxiRepository.save(t);
+
+                    prenotazione = gestisce.getPrenotazione();
+                    prenotazione.setPrezzoEffettivo(prenotazione.getPrezzoEffettivo().add(t.getPrezzo()));
+                    prenotazione.setNote(prenotazione.getNote() == null ? "" : prenotazione.getNote() + " | DESTINAZIONE: " + t.getLuogoDestinazione() + " - PREZZO: " + t.getPrezzo());
+                }
+                
+                prenotazioneRepository.save(prenotazione);
+
+                response = "ADDEBITO TAXI CONFERMATO CON SUCCESSO";
+            }
+            else{
+                response = "LA PRENOTAZIONE HA IL CHECK-IN NON EFFETTUATO O IL CHECK-OUT GIA' EFFETTUATO";
+            }
+            
+        }
+
+        return response;
     }
 
     public String eliminaPrenotazione(String codice) { 
@@ -420,6 +666,17 @@ public class PrenotazioneService {
         if (countPag > 0) {
             pagamentoRepository.deleteByPrenotazioneCodice(codice);
         }
+
+        Long countCons = consumaRepository.countByGestiscePrenotazioneCodice(codice);
+        if (countCons > 0) {
+            consumaRepository.deleteByGestiscePrenotazioneCodice(codice);
+        }
+
+        Long countTaxi = taxiRepository.countByGestiscePrenotazioneCodice(codice);
+        if (countTaxi > 0) {
+            taxiRepository.deleteByGestiscePrenotazioneCodice(codice);
+        }
+
         prenotazioneRepository.deleteByCodice(codice); 
 
         return "PRENOTAZIONE RIMOSSA CON SUCCESSO";

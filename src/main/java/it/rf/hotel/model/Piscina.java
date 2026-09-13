@@ -24,8 +24,8 @@ public class Piscina {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal lunghezza;
 
-    @ManyToOne
-    @JoinColumn(name = "dipendente_id")
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "dipendente_id", nullable = true)
     private Dipendente operatoreInterno;
 
     public Long getId() {

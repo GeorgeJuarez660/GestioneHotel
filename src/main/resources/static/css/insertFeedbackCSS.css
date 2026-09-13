@@ -1,0 +1,33 @@
+/*
+ * Stili della pagina insertFeedback.html.
+ * Estratti dal template: il file HTML resta solo struttura.
+ */
+
+/* Stile locale alla pagina: le note sono lunghe fino a 2000 caratteri,
+   un input su una riga sola non basta. */
+.field textarea {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-ink-border);
+  color: var(--color-ivory);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.5rem 0.15rem;
+  min-height: 140px;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.field textarea::placeholder {
+  color: rgba(242, 237, 226, 0.35);
+}
+
+.field textarea:focus {
+  outline: none;
+  border-bottom-color: var(--color-brass);
+}
+
+.field textarea:focus-visible {
+  outline: 2px solid var(--color-brass);
+  outline-offset: 3px;
+}

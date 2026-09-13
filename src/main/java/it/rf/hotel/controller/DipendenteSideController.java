@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import io.jsonwebtoken.Claims;
 import it.rf.hotel.config.JWTConfig;
+import it.rf.hotel.dto.BevandaResponse;
+import it.rf.hotel.dto.ConsumaRequest;
 import it.rf.hotel.dto.FeedbackDto;
 import it.rf.hotel.dto.GuidaDto;
 import it.rf.hotel.dto.NavettaDto;
@@ -24,13 +26,18 @@ import it.rf.hotel.dto.PiscinaDto;
 import it.rf.hotel.dto.PrenotazioneReqCheck;
 import it.rf.hotel.dto.PrenotazioneResponse;
 import it.rf.hotel.dto.StanzaDto;
+import it.rf.hotel.dto.TaxiRequest;
+import it.rf.hotel.exception.BevandaReferencedException;
 import it.rf.hotel.exception.CodiceDuplicatoException;
 import it.rf.hotel.exception.GuidaReferencedException;
+import it.rf.hotel.exception.InvalidDataCheckException;
 import it.rf.hotel.exception.NavettaReferencedException;
+import it.rf.hotel.exception.NotClienteFoundExpcetion;
 import it.rf.hotel.exception.PacchettoReferencedException;
 import it.rf.hotel.exception.PiscinaReferencedException;
 import it.rf.hotel.exception.StanzaReferencedException;
 import it.rf.hotel.model.Dipendente;
+import it.rf.hotel.service.BevandaService;
 import it.rf.hotel.service.DipendenteService;
 import it.rf.hotel.service.FeedbackService;
 import it.rf.hotel.service.NavettaService;
@@ -39,6 +46,7 @@ import it.rf.hotel.service.PiscinaService;
 import it.rf.hotel.service.PacchettoService;
 import it.rf.hotel.service.PrenotazioneService;
 import it.rf.hotel.service.StanzaService;
+import it.rf.hotel.service.TaxiService;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -74,6 +82,12 @@ public class DipendenteSideController {
     @Autowired
     private FeedbackService feedbackService;
 
+    @Autowired
+    private BevandaService bevandaService;
+
+    @Autowired
+    private TaxiService taxiService;
+
     @GetMapping("/check")
     public ResponseEntity<?> check(@RequestHeader("Authorization") String authHeader) {
         
@@ -101,8 +115,6 @@ public class DipendenteSideController {
     @PostMapping("/addStanza")
     public ResponseEntity<String> addStanza(@RequestHeader("Authorization") String authHeader, @Valid @RequestBody StanzaDto dto) {
         try {
-
-            
             String esito = stanzaService.creaStanza(dto);
 
             return ResponseEntity.ok(esito);
@@ -301,8 +313,35 @@ public class DipendenteSideController {
         catch (CodiceDuplicatoException exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE DUPLICATO CODICE PRENOTAZIONE");
         }
+        catch (InvalidDataCheckException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE DATI CHECK-IN/CHECK-OUT");
+        }
         catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE MODIFICA PRENOTAZIONE");
+        }
+    }
+
+    @PutMapping("/confirmConsumazione")
+    public ResponseEntity<String> confirmConsumazione(@Valid @RequestBody List<ConsumaRequest> consumazioni, @RequestParam String cfPossessore) {
+        try {
+            String esito = prenotazioneService.confermaConsumazione(consumazioni, cfPossessore);
+
+            return ResponseEntity.ok(esito);
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE MODIFICA CONSUMAZIONE");
+        }
+    }
+
+    @PutMapping("/confirmTaxi")
+    public ResponseEntity<String> confirmTaxi(@Valid @RequestBody List<ConsumaRequest> consumazioni, @RequestParam String cfPossessore) {
+        try {
+            String esito = prenotazioneService.addebitaTaxi(cfPossessore);
+
+            return ResponseEntity.ok(esito);
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE MODIFICA CORSE TAXI");
         }
     }
 
@@ -444,5 +483,111 @@ public class DipendenteSideController {
 
         return ResponseEntity.ok(piscine);
     }
-    
+
+    @PostMapping("/addBevanda")
+    public ResponseEntity<String> addBevanda(@Valid @RequestBody BevandaResponse dto) {
+        try {
+            String esito = bevandaService.creaBevanda(dto);
+
+            return ResponseEntity.ok(esito);
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE INSERIMENTO GUIDA");
+        }
+    }
+
+    @GetMapping("/goToUpdateBevanda/{codiceBevanda}")
+    public ResponseEntity<BevandaResponse> goToUpdateBevanda(@PathVariable String codiceBevanda) {
+        BevandaResponse bevanda = bevandaService.trovaBevanda(codiceBevanda);
+
+        return ResponseEntity.ok(bevanda);
+    }
+
+    @PutMapping("/modifyBevanda")
+    public ResponseEntity<String> updateBevanda(@Valid @RequestBody BevandaResponse dto, @RequestParam String codiceBevanda) {
+        try {
+            String esito = bevandaService.aggiornaBevanda(codiceBevanda, dto);
+
+            return ResponseEntity.ok(esito);
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE MODIFICA BEVANDA");
+        }
+    }
+
+    @GetMapping("/removeBevanda")
+    public ResponseEntity<String> removeBevanda(@RequestParam String codice) {
+        try {
+            String esito = bevandaService.eliminaBevanda(codice);
+
+            return ResponseEntity.ok(esito);
+        } 
+        catch (BevandaReferencedException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("BEVANDA IN CONSUMAZIONE AD UNA O PIU' PRENOTAZIONI");
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE RIMOZIONE BEVANDA");
+        }
+    }
+
+    @GetMapping("/readBevande")
+    public ResponseEntity<List<BevandaResponse>> readBevande() {
+        List<BevandaResponse> bevande = bevandaService.elencoBevande();
+
+        return ResponseEntity.ok(bevande);
+    }
+
+    @PostMapping("/addTaxi")
+    public ResponseEntity<String> addTaxi(@Valid @RequestBody TaxiRequest dto) {
+        try {
+            String esito = taxiService.creaTaxi(dto);
+
+            return ResponseEntity.ok(esito);
+        }
+        catch (NotClienteFoundExpcetion exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("CLIENTE NON TROVATO");
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE INSERIMENTO TAXI");
+        }
+    }
+
+    @GetMapping("/goToUpdateTaxi/{idTaxi}")
+    public ResponseEntity<TaxiRequest> goToUpdateTaxi(@PathVariable Long idTaxi) {
+        TaxiRequest taxi = taxiService.trovaTaxi(idTaxi);
+
+        return ResponseEntity.ok(taxi);
+    }
+
+    @PutMapping("/modifyTaxi")
+    public ResponseEntity<String> updateTaxi(@Valid @RequestBody TaxiRequest dto, @RequestParam Long idTaxi) {
+        try {
+            String esito = taxiService.aggiornaTaxi(idTaxi, dto);
+
+            return ResponseEntity.ok(esito);
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE MODIFICA TAXI");
+        }
+    }
+
+    @GetMapping("/removeTaxi")
+    public ResponseEntity<String> removeTaxi(@RequestParam Long id) {
+        try {
+            String esito = taxiService.eliminaTaxi(id);
+
+            return ResponseEntity.ok(esito);
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE RIMOZIONE TAXI");
+        }
+    }
+
+    @GetMapping("/readTaxi")
+    public ResponseEntity<List<TaxiRequest>> readTaxi() {
+        List<TaxiRequest> corse = taxiService.elencoTaxi();
+
+        return ResponseEntity.ok(corse);
+    }
+
 }

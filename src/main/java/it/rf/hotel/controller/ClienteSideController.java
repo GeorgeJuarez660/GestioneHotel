@@ -1,11 +1,13 @@
 package it.rf.hotel.controller;
 
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -17,6 +19,9 @@ import it.rf.hotel.config.JWTConfig;
 import it.rf.hotel.dto.FeedbackDto;
 import it.rf.hotel.dto.PrenotazioneResponse;
 import it.rf.hotel.exception.CodiceDuplicatoException;
+import it.rf.hotel.exception.NavettaNoSeatsException;
+import it.rf.hotel.exception.StanzaBookedException;
+import it.rf.hotel.exception.StanzaTooPeopleException;
 import it.rf.hotel.model.Cliente;
 import it.rf.hotel.service.ClienteService;
 import it.rf.hotel.service.FeedbackService;
@@ -89,6 +94,15 @@ public class ClienteSideController {
 
             }
         }
+        catch (StanzaBookedException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("STANZA GIA' PRENOTATA");
+        }
+        catch (StanzaTooPeopleException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("TROPPE PERSONE PER LA STANZA SELEZIONATA");
+        }
+        catch (NavettaNoSeatsException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("NON CI SONO POSTI DISPONIBILI PER LA NAVETTA SELEZIONATA");
+        }
         catch (CodiceDuplicatoException exception) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE DUPLICATO CODICE PRENOTAZIONE");
         }
@@ -128,26 +142,27 @@ public class ClienteSideController {
         }
     }
 
-    @GetMapping("/readFeedbackByClienteCF")
-    public ResponseEntity<?> readFeedback(@RequestHeader("Authorization") String authHeader) {
-        if(authHeader != null && !authHeader.startsWith("Bearer ")){
-            return ResponseEntity.status(HttpStatusCode.valueOf(403)).body("ACCESSO NEGATO");
+    @GetMapping("/readFeedback/{clienteCF}")
+    public ResponseEntity<?> readFeedbacks(@PathVariable String clienteCF) {
+        try {
+
+            List<FeedbackDto> esito = feedbackService.elencoFeedbackInBaseAlCliente(clienteCF);
+            return ResponseEntity.ok(esito);
         }
-        else{
-            String token = authHeader.substring(7);
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE LETTURA FEEDBACK");
+        }
+    }
 
-            if (!jwtConfig.isValid(token)) {
-                return ResponseEntity.status(HttpStatusCode.valueOf(403)).body("ACCESSO NEGATO");
-            }
-            else{
-                Claims claims = jwtConfig.parseClaims(token);
-                String clienteCF = claims.get("clienteCF", String.class);
-                
-                List<FeedbackDto> feedbacks = feedbackService.elencoFeedbackInBaseAlCliente(clienteCF);
+    @GetMapping("/readPrenotazioni/{clienteCF}")
+    public ResponseEntity<?> readPrenotazioni(@PathVariable String clienteCF) {
+        try {
 
-                return ResponseEntity.ok(feedbacks);
-            }
-
+            List<PrenotazioneResponse> esito = prenotazioneService.elencoPrenotazioniByCliente(clienteCF);
+            return ResponseEntity.ok(esito);
+        }
+        catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ERRORE LETTURA PRENOTAZIONI");
         }
     }
 

@@ -23,7 +23,7 @@ public class SecurityConfig {
             
             .authorizeHttpRequests(auth -> auth
                 // Percorsi pubblici: accessibili senza autenticazione
-                .requestMatchers("/hotel/**", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/hotel/**", "/css/**", "/js/**", "/img/**").permitAll()
                 
                 // Tutte le altre richieste richiedono l'autenticazione
                 .anyRequest().authenticated()

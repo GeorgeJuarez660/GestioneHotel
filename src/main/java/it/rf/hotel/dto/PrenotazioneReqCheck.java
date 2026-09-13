@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 public class PrenotazioneReqCheck {
 
@@ -17,6 +18,11 @@ public class PrenotazioneReqCheck {
     @NotNull(message = "Prezzo totale obbligatorio")
     @DecimalMin(value = "0.0", inclusive = true, message = "Prezzo totale non valido")
     private BigDecimal prezzoTotale;
+
+    /* Il prezzo effettivo lo ricalcola il service man mano che si addebitano
+       consumazioni e taxi: puo' arrivare vuoto, quindi niente @NotNull. */
+    @DecimalMin(value = "0.0", inclusive = true, message = "Prezzo effettivo non valido")
+    private BigDecimal prezzoEffettivo;
 
     private LocalDate dataCheckIn;
 
@@ -47,6 +53,8 @@ public class PrenotazioneReqCheck {
     @Size(max = 16, message = "Codice stato pagamento non valido")
     private String statoPagamento;
 
+    private List<ConsumaRequest> consumazioni;
+
     public PrenotazioneReqCheck() {
     }
 
@@ -61,6 +69,9 @@ public class PrenotazioneReqCheck {
 
     public BigDecimal getPrezzoTotale() { return prezzoTotale; }
     public void setPrezzoTotale(BigDecimal prezzoTotale) { this.prezzoTotale = prezzoTotale; }
+
+    public BigDecimal getPrezzoEffettivo() { return prezzoEffettivo; }
+    public void setPrezzoEffettivo(BigDecimal prezzoEffettivo) { this.prezzoEffettivo = prezzoEffettivo; }
 
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
@@ -85,5 +96,8 @@ public class PrenotazioneReqCheck {
 
     public Integer getNumPersone() { return numPersone; }
     public void setNumPersone(Integer numPersone) { this.numPersone = numPersone; }
+
+    public List<ConsumaRequest> getConsumazioni() { return consumazioni; }
+    public void setConsumazioni(List<ConsumaRequest> consumazioni) { this.consumazioni = consumazioni; }
 
 }

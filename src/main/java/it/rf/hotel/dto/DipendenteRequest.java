@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
-public class RegisterDipendenteRequest {
+public class DipendenteRequest {
 
     @NotBlank(message = "Nome obbligatorio") @Size(max = 100)
     private String nome;
@@ -24,10 +24,12 @@ public class RegisterDipendenteRequest {
     private String password;
     @NotBlank(message = "Lingua obbligatoria") @Size(max = 50)
     private String lingua;
+    @NotBlank(message = "Codice dipendente obbligatoria") @Size(min = 8, max = 100)
+    private String codDipendente;
     @NotBlank(message = "Categoria obbligatoria") @Size(max = 100)
     private String categoria;
 
-    public RegisterDipendenteRequest() {
+    public DipendenteRequest() {
     }
 
     public String getNome() { return nome; } public void setNome(String nome) { this.nome = nome; }
@@ -37,5 +39,6 @@ public class RegisterDipendenteRequest {
     public String getUsername() { return username; } public void setUsername(String username) { this.username = username; }
     public String getPassword() { return password; } public void setPassword(String password) { this.password = password; }
     public String getLingua() { return lingua; } public void setLingua(String lingua) { this.lingua = lingua; }
+    public String getCodDipendente() { return codDipendente; } public void setCodDipendente(String codDipendente) { this.codDipendente = codDipendente; }
     public String getCategoria() { return categoria; } public void setCategoria(String categoria) { this.categoria = categoria; }
 }

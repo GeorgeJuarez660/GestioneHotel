@@ -10,7 +10,7 @@ public class SwitchPagesController {
 
     @GetMapping("/")
     public String start() {
-        return "chooseRegisterLogin";
+        return "dashboard";
     }
 
     @GetMapping("/register-cliente")
@@ -43,11 +43,6 @@ public class SwitchPagesController {
         return "homepageDipendente";
     }
 
-    @GetMapping("/logout/")
-    public String logout() {
-        return "chooseRegisterLogin";
-    }
-
     //------PRENOTAZIONE, STANZE, FEEDBACK E SERVIZIO NAVETTA, GUIDA E PISCINA
 
     @GetMapping("/cliente/prenotazione")
@@ -75,6 +70,21 @@ public class SwitchPagesController {
         return "setServizioNavetta";
     }
 
+    @GetMapping("/dipendente/taxi")
+    public String taxiDipendente() {
+        return "setTaxi";
+    }
+
+    @GetMapping("/cliente/taxi")
+    public String taxiCliente() {
+        return "setTaxi";
+    }
+
+    @GetMapping("/dipendente/bevande")
+    public String bevandaDipendente() {
+        return "insertBevanda";
+    }
+
     @GetMapping("/dipendente/pacchetti")
     public String pacchettiDipendente() {
         return "insertPacchetti";
@@ -85,6 +95,11 @@ public class SwitchPagesController {
         return "showFeedbackCliente";
     }
 
+    @GetMapping("/cliente/mie-prenotazioni")
+    public String prenotazioniCliente() {
+        return "prenotazioneByCliente";
+    }
+
     @GetMapping("/dipendente/feedback")
     public String feedbackDipendente() {
         return "showFeedbackDipendente";
@@ -93,6 +108,11 @@ public class SwitchPagesController {
     @GetMapping("/dipendente/modifica-stanza")
     public String modificaStanzaDipendente() {
         return "updateStanza";
+    }
+
+    @GetMapping("/dipendente/modifica-bevanda")
+    public String modificaBevandaDipendente() {
+        return "updateBevanda";
     }
 
     @GetMapping("/dipendente/modifica-navetta")

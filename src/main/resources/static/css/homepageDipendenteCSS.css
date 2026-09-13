@@ -1,0 +1,11 @@
+/*
+ * Stili della pagina homepageDipendente.html.
+ * Estratti dal template: il file HTML resta solo struttura.
+ */
+
+/* Card spente quando /check non riconosce il dipendente. */
+.action-card--bloccata {
+  pointer-events: none;
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}

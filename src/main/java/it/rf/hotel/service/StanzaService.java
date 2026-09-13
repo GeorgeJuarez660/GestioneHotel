@@ -37,7 +37,25 @@ public class StanzaService {
 
             Stanza stanza = new Stanza();
             stanza.setCodice(dto.getCodice());
-            stanza.setCapienza(dto.getCapienza());
+
+            if(dto.getTipoStanza().equals("SINGOLA") && dto.getCapienza() == null){
+                stanza.setCapienza(1);
+            }
+            else if(dto.getTipoStanza().equals("DOPPIA") && dto.getCapienza() == null){
+                stanza.setCapienza(2);
+            }
+            else if(dto.getTipoStanza().equals("TRIPLA") && dto.getCapienza() == null){
+                stanza.setCapienza(3);
+            }
+            else if(dto.getTipoStanza().equals("FAMILIARE") && dto.getCapienza() == null){
+                stanza.setCapienza(4);
+            }
+            else if(dto.getTipoStanza().equals("MATRIMONIALE") && dto.getCapienza() == null){
+                stanza.setCapienza(2);
+            }
+            else{
+                stanza.setCapienza(dto.getCapienza());
+            }
             stanza.setPiano(dto.getPiano());
             stanza.setPrezzoBase(dto.getPrezzoBase());
             stanza.setTermoregolabile(dto.getTermoregolabile());

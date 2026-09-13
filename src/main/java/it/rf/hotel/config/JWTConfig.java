@@ -15,6 +15,7 @@ import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import it.rf.hotel.model.Cliente;
 import it.rf.hotel.model.Dipendente;
+import it.rf.hotel.model.OperatoreEsterno;
 
 @Component // Rende questa classe un Bean gestito da Spring, iniettabile altrove
 public class JWTConfig {
@@ -45,6 +46,17 @@ public class JWTConfig {
                 .subject(dipendente.getUsername())
                 .claim("dipendenteId", dipendente.getId())
                 .claim("dipendenteCF", dipendente.getCodiceFiscale())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .signWith(key)
+                .compact();
+    }
+
+    public String generateTokenFromDipendente(OperatoreEsterno operatoreEsterno) {
+        return Jwts.builder()
+                .subject(operatoreEsterno.getUsername())
+                .claim("dipendenteId", operatoreEsterno.getId())
+                .claim("dipendenteCF", operatoreEsterno.getCodiceFiscale())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
                 .signWith(key)

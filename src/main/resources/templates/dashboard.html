@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+<link rel="stylesheet" th:href="@{/css/dashboardCSS.css}">
+</head>
+<body>
+
+<div class="dashboard-hero">
+
+  <div class="dashboard-hero__bg" aria-hidden="true"></div>
+  <div class="dashboard-hero__scrim" aria-hidden="true"></div>
+
+  <header class="brandbar">
+    <div class="brandbar__mark">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+        <circle cx="8" cy="14" r="3"></circle>
+        <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+      </svg>
+      Gestionale Hotel
+    </div>
+  </header>
+
+  <main class="dashboard-hero__body">
+
+    <span class="card__eyebrow">Benvenuto</span>
+    <h1 class="dashboard-hero__title">Il tuo soggiorno<br>comincia da qui</h1>
+    <p class="dashboard-hero__lead">
+      Accedi al tuo account per prenotare una stanza o lasciare un feedback, oppure registrati se e' la tua prima visita.
+    </p>
+
+    <div class="dashboard-hero__actions">
+      <button type="button" class="btn btn-primary" id="btnLogin">Accedi</button>
+      <button type="button" class="btn btn-secondary" id="btnOspite">Entra come ospite</button>
+    </div>
+
+    <div id="esito" class="esito dashboard-hero__esito" hidden></div>
+
+  </main>
+
+</div>
+
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/dashboardJS.js}"></script>
+
+</body>
+</html>

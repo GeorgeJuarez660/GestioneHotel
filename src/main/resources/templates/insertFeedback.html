@@ -5,36 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lascia un feedback - Gestionale Hotel</title>
 <link rel="stylesheet" th:href="@{/css/style.css}">
-<style>
-  /* Stile locale alla pagina: le note sono lunghe fino a 2000 caratteri,
-     un input su una riga sola non basta. */
-  .field textarea {
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--color-ink-border);
-    color: var(--color-ivory);
-    font-family: var(--font-body);
-    font-size: 1rem;
-    padding: 0.5rem 0.15rem;
-    min-height: 140px;
-    resize: vertical;
-    transition: border-color 0.2s ease;
-  }
-
-  .field textarea::placeholder {
-    color: rgba(242, 237, 226, 0.35);
-  }
-
-  .field textarea:focus {
-    outline: none;
-    border-bottom-color: var(--color-brass);
-  }
-
-  .field textarea:focus-visible {
-    outline: 2px solid var(--color-brass);
-    outline-offset: 3px;
-  }
-</style>
+<link rel="stylesheet" th:href="@{/css/insertFeedbackCSS.css}">
 </head>
 <body>
 
@@ -80,79 +51,7 @@
 </main>
 
 <script th:src="@{/js/common.js}"></script>
-<script>
-  const ENDPOINT_CLIENTE = API_BASE + '/homepage/cliente';
-
-  const MESSAGGIO_ACCESSO_NEGATO = 'ACCESSO NEGATO: effettua di nuovo l\'accesso.';
-
-  /*
-   * Verifica dell'accesso prima delle operazioni protette: /check deve
-   * restituire un cliente.
-   */
-  async function accessoConsentito() {
-    try {
-      const response = await fetch(ENDPOINT_CLIENTE + '/check', {
-        method: 'GET',
-        headers: { 'Authorization': 'Bearer ' + (recuperaToken() || '') }
-      });
-
-      if (!response.ok) return false;
-
-      const corpo = await leggiCorpoRisposta(response);
-
-      return corpo !== null && typeof corpo === 'object' && corpo.id != null;
-    } catch (errore) {
-      return false;
-    }
-  }
-
-  const form = document.getElementById('formFeedback');
-  const esito = document.getElementById('esito');
-  const btnSubmit = document.getElementById('btnSubmit');
-
-  async function gestisciInserimento(event) {
-    event.preventDefault();
-    nascondiEsito(esito);
-
-    if (!(await accessoConsentito())) {
-      mostraEsito(esito, MESSAGGIO_ACCESSO_NEGATO, 'error');
-      return;
-    }
-
-    const corpoRichiesta = {
-      note: document.getElementById('note').value.trim()
-    };
-
-    btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Invio in corso...';
-
-    try {
-      const response = await fetch(ENDPOINT_CLIENTE + '/addFeedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + (recuperaToken() || '')
-        },
-        body: JSON.stringify(corpoRichiesta)
-      });
-
-      const corpo = await leggiCorpoRisposta(response);
-
-      if (response.ok) {
-        mostraEsito(esito, corpo || 'Feedback inviato con successo.', 'success');
-        form.reset();
-      } else {
-        // In caso di errori di validazione il backend restituisce un array di messaggi.
-        mostraEsito(esito, corpo || 'Errore durante l\'invio del feedback.', 'error');
-      }
-    } catch (errore) {
-      mostraEsito(esito, 'Impossibile contattare il server. Riprova piu tardi.', 'error');
-    } finally {
-      btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Invia feedback';
-    }
-  };
-</script>
+<script th:src="@{/js/insertFeedbackJS.js}"></script>
 
 </body>
 </html>

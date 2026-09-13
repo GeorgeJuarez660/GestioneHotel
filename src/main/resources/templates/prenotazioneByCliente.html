@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le mie prenotazioni - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+<link rel="stylesheet" th:href="@{/css/prenotazioneByClienteCSS.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/homepage/cliente/}">&larr; Torna al pannello</a>
+</header>
+
+<main class="manage-shell">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow">Area Cliente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">Le mie prenotazioni</h1>
+      <p class="dashboard-header__welcome">Le prenotazioni registrate a tuo nome.</p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel__header">
+      <h2 class="panel__title">Prenotazioni</h2>
+      <button type="button" class="btn btn-secondary btn-small" id="btnAggiorna">Aggiorna elenco</button>
+    </div>
+    <hr class="divider-brass">
+
+    <div id="esitoElenco" class="esito" hidden></div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Codice</th>
+            <th>Cliente</th>
+            <th>Prenotata il</th>
+            <th>Data inizio</th>
+            <th>Data fine</th>
+            <th>Prezzo tot. iniziale</th>
+            <th>Prezzo tot. effettivo</th>
+            <th>Stato Pr.</th>
+            <th>Receptionist</th>
+            <th>Azioni</th>
+          </tr>
+        </thead>
+        <tbody id="corpoTabella">
+          <tr><td class="data-table__empty" colspan="10">Caricamento in corso...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/prenotazioneByClienteJS.js}"></script>
+
+</body>
+</html>

@@ -5,9 +5,11 @@ import it.rf.hotel.exception.CodiceDuplicatoException;
 import it.rf.hotel.exception.GuidaReferencedException;
 import it.rf.hotel.model.Dipendente;
 import it.rf.hotel.model.Guida;
+import it.rf.hotel.model.OperatoreEsterno;
 import it.rf.hotel.repository.DipendenteRepository;
 import it.rf.hotel.repository.GuidaRepository;
 import it.rf.hotel.repository.IncludeRepository;
+import it.rf.hotel.repository.OperatoreEsternoRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,9 @@ public class GuidaService {
     @Autowired
     private DipendenteRepository dipendenteRepository;
 
+    @Autowired
+    private OperatoreEsternoRepository operatoreEsternoRepository;
+
 
     public String creaGuida(GuidaDto dto) throws CodiceDuplicatoException {
 
@@ -47,10 +52,10 @@ public class GuidaService {
                 guida.setOperatoreInterno(operatoreInterno);
             }
 
-            /*if (dto.getOperatoreEsternoId() != null) {
-                OperatoreEsterno operatoreEsterno = entityManager.getReference(OperatoreEsterno.class, dto.getOperatoreEsternoId());
-                navetta.setOperatoreEsterno(operatoreEsterno);
-            }*/
+            if (dto.getCfOperatoreEsterno() != null) {
+                OperatoreEsterno operatoreEsterno = operatoreEsternoRepository.findByCodiceFiscale(dto.getCfOperatoreEsterno()).orElse(null);
+                guida.setOperatoreEsterno(operatoreEsterno);
+            }
 
             guidaRepository.save(guida);
 

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestione bevande - Gestionale Hotel</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+<link rel="stylesheet" th:href="@{/css/insertBevandaCSS.css}">
+</head>
+<body>
+
+<header class="brandbar">
+  <div class="brandbar__mark">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-brass)">
+      <circle cx="8" cy="14" r="3"></circle>
+      <path d="M10.5 11.5 L20 2 M16.2 6.3 L18.3 8.4 M13.4 9.1 L15 10.7"></path>
+    </svg>
+    Gestionale Hotel
+  </div>
+  <a class="brandbar__back" th:href="@{/hotel/homepage/dipendente/}">&larr; Torna al pannello</a>
+</header>
+
+<main class="manage-shell">
+
+  <div class="dashboard-header">
+    <div>
+      <span class="card__eyebrow">Area Dipendente</span>
+      <h1 class="card__title" style="font-size:1.8rem;">Gestione bevande</h1>
+      <p class="dashboard-header__welcome">Inserisci una nuova bevanda a listino e consulta quelle gia' disponibili.</p>
+    </div>
+  </div>
+
+  <div class="manage-grid">
+
+    <section class="panel">
+      <div class="panel__header">
+        <h2 class="panel__title">Nuova bevanda</h2>
+      </div>
+      <hr class="divider-brass">
+
+      <div id="esito" class="esito" hidden></div>
+
+      <form id="formBevanda" onsubmit="gestisciInserimento(event)">
+        <div class="field">
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" name="nome" maxlength="255" placeholder="Es. Champagne" required>
+          <span class="hint">Identifica la bevanda: non puo' essere duplicato.</span>
+        </div>
+        <div class="field">
+          <label for="quantitaBase">Quantita' base</label>
+          <input type="number" id="quantitaBase" name="quantitaBase" min="0" placeholder="Es. 1" required>
+        </div>
+        <div class="field">
+          <label for="prezzoBase">Prezzo base</label>
+          <input type="number" id="prezzoBase" name="prezzoBase" min="0" step="0.01" placeholder="Es. 45.00" required>
+          <span class="hint">Non puo' essere negativo.</span>
+        </div>
+
+        <div class="check-row">
+          <input type="checkbox" id="alcolico" name="alcolico">
+          <label for="alcolico">Alcolico</label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">Aggiungi bevanda</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel__header">
+        <h2 class="panel__title">Bevande a listino</h2>
+        <button type="button" class="btn btn-secondary btn-small" id="btnAggiorna">Aggiorna elenco</button>
+      </div>
+      <hr class="divider-brass">
+
+      <div id="esitoElenco" class="esito" hidden></div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Quantita' base</th>
+              <th>Prezzo base</th>
+              <th>Alcolico</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabella">
+            <tr><td class="data-table__empty" colspan="5">Caricamento in corso...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+</main>
+
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/insertBevandaJS.js}"></script>
+
+</body>
+</html>
